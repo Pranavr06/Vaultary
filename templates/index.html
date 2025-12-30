@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PassGuard - Password Strength Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>PassGuard 🛡️</h1>
+    <p>Analyze your password strength and cracking time.</p>
+    
+    <input type="text" id="passwordInput" placeholder="Type a password..." autocomplete="off">
+    
+    <div id="result-box" class="hidden">
+        <div class="meter-container">
+            <div id="strength-meter"></div>
+        </div>
+        <h3 id="score-text"></h3>
+        <p><strong>Time to Crack:</strong> <span id="crack-time"></span></p>
+        
+        <div class="feedback">
+            <p id="warning" class="warning"></p>
+            <ul id="suggestions"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const passwordInput = document.getElementById('passwordInput');
+    const resultBox = document.getElementById('result-box');
+    
+    passwordInput.addEventListener('input', async () => {
+        const password = passwordInput.value;
+        
+        if (password.length === 0) {
+            resultBox.classList.add('hidden');
+            return;
+        }
+
+        const response = await fetch('/check_password', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({password: password})
+        });
+
+        const data = await response.json();
+        updateUI(data);
+    });
+
+    function updateUI(data) {
+        resultBox.classList.remove('hidden');
+        const meter = document.getElementById('strength-meter');
+        const scoreText = document.getElementById('score-text');
+        
+        // Update text
+        document.getElementById('crack-time').innerText = data.crack_time;
+        document.getElementById('warning').innerText = data.feedback.warning || "";
+        
+        // Update suggestions
+        const suggestionsList = document.getElementById('suggestions');
+        suggestionsList.innerHTML = "";
+        data.feedback.suggestions.forEach(s => {
+            let li = document.createElement('li');
+            li.innerText = s;
+            suggestionsList.appendChild(li);
+        });
+
+        // Update Meter Color & Width
+        const colors = ['#ff4d4d', '#ff944d', '#ffda4d', '#aadd4d', '#4dff88'];
+        const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+        
+        meter.style.width = ((data.score + 1) * 20) + "%";
+        meter.style.backgroundColor = colors[data.score];
+        scoreText.innerText = labels[data.score];
+        scoreText.style.color = colors[data.score];
+    }
+</script>
+
+</body>
+</html>
