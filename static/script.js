@@ -797,6 +797,7 @@ authSubmitBtn.addEventListener('click', async () => {
 // --- 2FA LOGIN VERIFY ---
 login2FASubmitBtn.addEventListener('click', async () => {
     const code = login2FACode.value.replace(/\s/g, '');
+    login2FAMessage.innerText = "";
     setLoading(login2FASubmitBtn, true);
     
     try {
@@ -969,6 +970,8 @@ async function startSetup2FA() {
     const res = await fetch('/2fa/setup', { method: 'POST' });
     const data = await res.json();
     qrCodeImage.src = data.qr_image;
+    setup2FACode.value = "";
+    setup2FAMessage.innerText = "";
     dashboardModal.classList.add('hidden');
     setup2FAModal.classList.remove('hidden');
 }
