@@ -24,14 +24,13 @@ from cryptography.fernet import Fernet
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
-from werkzeug.middleware.proxy_fix import ProxyFix  # <--- ADDED THIS IMPORT
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
 app = Flask(__name__)
 
 # --- FIX HTTPS ON RENDER ---
-# This tells Flask to trust the headers sent by Render's proxy
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 CORS(app)
@@ -60,7 +59,6 @@ csp = {
     'font-src': ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
     'img-src': ["'self'", "data:", "ui-avatars.com", "*.googleusercontent.com", "*.githubusercontent.com", "*.licdn.com", "media.licdn.com"]
 }
-# Note: force_https=True is safer for production, but False is okay if ProxyFix handles it.
 talisman = Talisman(app, force_https=False, content_security_policy=csp)
 
 # --- OAUTH KEYS ---
@@ -139,7 +137,6 @@ class Vault(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     def get_encryption_key():
-        # Ensure we can find the key whether it's named VAULT_KEY or ENCRYPTION_KEY
         key = os.getenv('VAULT_KEY') or os.getenv('ENCRYPTION_KEY')
         if not key:
             raise ValueError("No Encryption Key Found in Environment Variables")
@@ -641,6 +638,10 @@ def contact_support():
     except Exception as e:
         return jsonify({'message': 'Error sending message'}), 500
 
+# --- DATABASE TABLE CREATION (FIXED FOR RENDER) ---
+# We move this OUTSIDE the "if __name__" block so Render runs it
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context(): db.create_all()
     app.run(debug=True)
