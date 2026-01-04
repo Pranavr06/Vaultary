@@ -121,7 +121,7 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
     auth_provider = db.Column(db.String(20), default='local')
-    two_factor_secret = db.Column(db.String(64), nullable=True) # Increased length for safety
+    two_factor_secret = db.Column(db.String(64), nullable=True)
     is_2fa_enabled = db.Column(db.Boolean, default=False)
     
     # Relationships
@@ -289,15 +289,16 @@ def login():
     return jsonify({'message': 'Invalid credentials'}), 401
 
 @app.route('/login/verify_2fa', methods=['POST'])
-@limiter.limit("3 per minute")
+@limiter.limit("5 per minute")
 def login_verify_2fa():
     data = request.get_json()
     try:
         decoded = jwt.decode(data.get('temp_token'), app.config['SECRET_KEY'], algorithms=["HS256"])
         if not decoded.get('2fa_pending'): return jsonify({'message': 'Invalid flow'}), 400
+        
         user = User.query.get(decoded['user_id'])
         if not user: return jsonify({'message': 'User not found'}), 404
-        if not user.two_factor_secret: return jsonify({'message': '2FA setup required'}), 400
+        if not user.two_factor_secret: return jsonify({'message': '2FA not set up'}), 400
         
         totp = pyotp.TOTP(user.two_factor_secret)
         code = str(data.get('code', '')).replace(' ', '')
@@ -308,9 +309,7 @@ def login_verify_2fa():
             resp.set_cookie('token', token, httponly=True)
             return resp
         else: return jsonify({'message': 'Invalid Code'}), 400
-    except Exception as e: 
-        print(f"2FA Verify Error: {e}") # Debugging
-        return jsonify({'message': 'Session expired or Invalid'}), 401
+    except: return jsonify({'message': 'Session expired'}), 401
 
 @app.route('/2fa/setup', methods=['POST'])
 @token_required
@@ -319,7 +318,7 @@ def setup_2fa(current_user):
     current_user.two_factor_secret = secret
     db.session.commit()
     
-    # --- FIX: USE pyotp.TOTP DIRECTLY ---
+    # --- FIX: Removed incorrect '.totp' property usage ---
     uri = pyotp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="Vaultary")
     
     img = qrcode.make(uri)
