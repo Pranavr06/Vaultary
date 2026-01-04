@@ -395,8 +395,19 @@ def google_callback():
     user_info = google.get('https://www.googleapis.com/oauth2/v3/userinfo').json()
     user = User.query.filter_by(email=user_info['email']).first()
     if not user:
+        # --- CHECK IF THIS IS THE FIRST USER ---
+        is_first_user = User.query.first() is None
+        
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
-        user = User(username=user_info['name'], email=user_info['email'], password=dummy, is_verified=True, auth_provider='google', profile_pic=user_info['picture'])
+        user = User(
+            username=user_info['name'], 
+            email=user_info['email'], 
+            password=dummy, 
+            is_verified=True, 
+            auth_provider='google', 
+            profile_pic=user_info['picture'],
+            is_admin=is_first_user # Set Admin if first user
+        )
         db.session.add(user)
         db.session.commit()
     token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
@@ -418,8 +429,19 @@ def github_callback():
     
     user = User.query.filter_by(email=email).first()
     if not user:
+        # --- CHECK IF THIS IS THE FIRST USER ---
+        is_first_user = User.query.first() is None
+        
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
-        user = User(username=resp['login'], email=email, password=dummy, is_verified=True, auth_provider='github', profile_pic=resp['avatar_url'])
+        user = User(
+            username=resp['login'], 
+            email=email, 
+            password=dummy, 
+            is_verified=True, 
+            auth_provider='github', 
+            profile_pic=resp['avatar_url'],
+            is_admin=is_first_user # Set Admin if first user
+        )
         db.session.add(user)
         db.session.commit()
     
@@ -432,7 +454,8 @@ def github_callback():
 
 @app.route('/login/linkedin')
 def linkedin_login():
-    return linkedin.authorize_redirect(url_for('linkedin_callback', _external=True))
+    # --- FORCE HTTPS SCHEME HERE ---
+    return linkedin.authorize_redirect(url_for('linkedin_callback', _external=True, _scheme='https'))
 
 @app.route('/login/linkedin/callback')
 def linkedin_callback():
@@ -441,8 +464,19 @@ def linkedin_callback():
     
     user = User.query.filter_by(email=user_info['email']).first()
     if not user:
+        # --- CHECK IF THIS IS THE FIRST USER ---
+        is_first_user = User.query.first() is None
+        
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
-        user = User(username=user_info['name'], email=user_info['email'], password=dummy, is_verified=True, auth_provider='linkedin', profile_pic=user_info.get('picture', ''))
+        user = User(
+            username=user_info['name'], 
+            email=user_info['email'], 
+            password=dummy, 
+            is_verified=True, 
+            auth_provider='linkedin', 
+            profile_pic=user_info.get('picture', ''),
+            is_admin=is_first_user # Set Admin if first user
+        )
         db.session.add(user)
         db.session.commit()
         
