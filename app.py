@@ -30,14 +30,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# --- PASTE THIS BLOCK RIGHT HERE ---
-linkedin_secret = os.getenv('LINKEDIN_CLIENT_SECRET')
-if linkedin_secret:
-    print(f"✅ DEBUG: LinkedIn Secret FOUND. Length: {len(linkedin_secret)}")
-else:
-    print("❌ DEBUG: LinkedIn Secret is TOTALLY MISSING in this environment.")
-# ------------------------------------
-
 # --- FIX HTTPS ON RENDER ---
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
