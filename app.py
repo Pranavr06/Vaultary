@@ -297,8 +297,12 @@ def login_verify_2fa():
         if not decoded.get('2fa_pending'): return jsonify({'message': 'Invalid flow'}), 400
         user = User.query.get(decoded['user_id'])
         if not user: return jsonify({'message': 'User not found'}), 404
+        if not user.two_factor_secret: return jsonify({'message': '2FA configuration error'}), 400
+        
         totp = pyotp.TOTP(user.two_factor_secret)
-        if totp.verify(data.get('code')):
+        code = data.get('code', '').replace(' ', '')
+        
+        if totp.verify(code, valid_window=1):
             token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
             resp = make_response(jsonify({'status': 'success', 'token': token, 'username': user.username, 'is_admin': user.is_admin}))
             resp.set_cookie('token', token, httponly=True)
@@ -325,7 +329,8 @@ def enable_2fa_confirm(current_user):
     data = request.get_json()
     if not current_user.two_factor_secret: return jsonify({'message': 'Setup first'}), 400
     totp = pyotp.TOTP(current_user.two_factor_secret)
-    if totp.verify(data.get('code')):
+    code = data.get('code', '').replace(' ', '')
+    if totp.verify(code, valid_window=1):
         current_user.is_2fa_enabled = True
         db.session.commit()
         return jsonify({'message': '2FA Enabled!'})

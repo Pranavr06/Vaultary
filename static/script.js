@@ -796,7 +796,7 @@ authSubmitBtn.addEventListener('click', async () => {
 
 // --- 2FA LOGIN VERIFY ---
 login2FASubmitBtn.addEventListener('click', async () => {
-    const code = login2FACode.value;
+    const code = login2FACode.value.replace(/\s/g, '');
     setLoading(login2FASubmitBtn, true);
     
     try {
@@ -974,7 +974,7 @@ async function startSetup2FA() {
 }
 
 confirm2FABtn.addEventListener('click', async () => {
-    const code = setup2FACode.value;
+    const code = setup2FACode.value.replace(/\s/g, '');
     setLoading(confirm2FABtn, true);
     
     const res = await fetch('/2fa/enable', {
