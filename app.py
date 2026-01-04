@@ -243,8 +243,8 @@ def register():
         try:
             token = jwt.encode({'email': new_user.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'])
             verify_url = url_for('verify_email', token=token, _external=True)
-            msg = Message('Verify Your PassGuard Account', sender=app.config['MAIL_USERNAME'], recipients=[new_user.email])
-            msg.body = f'Welcome to PassGuard! Please click this link to verify your email: {verify_url}'
+            msg = Message('Verify Your Vaultary Account', sender=app.config['MAIL_USERNAME'], recipients=[new_user.email])
+            msg.body = f'Welcome to Vaultary! Please click this link to verify your email: {verify_url}'
             mail.send(msg)
             return jsonify({'message': 'Account created! Check your email.'})
         except: return jsonify({'message': 'Account created! (Email failed)'})
@@ -312,7 +312,7 @@ def setup_2fa(current_user):
     secret = pyotp.random_base32()
     current_user.two_factor_secret = secret
     db.session.commit()
-    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="PassGuard")
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="Vaultary")
     img = qrcode.make(uri)
     buffered = io.BytesIO()
     img.save(buffered, format="PNG")
