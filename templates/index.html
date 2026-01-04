@@ -2,82 +2,601 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PassGuard - Password Strength Analyzer</title>
+    
+    <meta name="description" content="PassGuard - Advanced Identity & Security Platform. Test password strength, manage vaults, and secure your digital life.">
+    <meta name="keywords" content="password strength checker, password manager, secure vault, 2fa, identity protection, cybersecurity tool, aes-256 encryption">
+    <meta name="author" content="Pranav R">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PassGuard | Identity Platform">
+    <meta property="og:description" content="Secure your passwords with military-grade encryption and real-time breach detection.">
+    <meta property="og:image" content="{{ url_for('static', filename='og-image.png') }}">
+    <meta property="og:url" content="https://pranavr.netlify.app/">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PassGuard | Identity & Security Platform">
+    <meta name="twitter:description" content="Secure your passwords with military-grade encryption and real-time breach detection.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png') }}">
+
+    <link rel="canonical" href="https://pranavr.netlify.app/">
+    <link rel="icon" href="{{ url_for('static', filename='passguard-favicon.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='passguard-favicon.png') }}">
+
+    <title>PassGuard | Identity & Security Platform</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "PassGuard",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Advanced Identity & Security Platform. Test password strength, manage vaults, and secure your digital life.",
+      "author": {
+          "@type": "Person",
+          "name": "Pranav R"
+      }
+    }
+    </script>
 </head>
 <body>
 
-<div class="container">
-    <h1>PassGuard 🛡️</h1>
-    <p>Analyze your password strength and cracking time.</p>
-    
-    <input type="text" id="passwordInput" placeholder="Type a password..." autocomplete="off">
-    
-    <div id="result-box" class="hidden">
-        <div class="meter-container">
-            <div id="strength-meter"></div>
+    <div id="toast-box"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="{{ url_for('static', filename='logo.svg') }}" alt="PassGuard Logo">
         </div>
-        <h3 id="score-text"></h3>
-        <p><strong>Time to Crack:</strong> <span id="crack-time"></span></p>
-        
-        <div class="feedback">
-            <p id="warning" class="warning"></p>
-            <ul id="suggestions"></ul>
+
+        <div class="nav-actions desktop-only">
+            <button id="loginBtn" class="nav-btn">Login</button>
+            
+            <div id="userProfile" class="hidden">
+                <span id="usernameDisplay"></span>
+                <button id="dashboardBtn" class="nav-btn outline" type="button">Dashboard</button>
+            </div>
+
+            <button id="theme-toggle" class="theme-btn" type="button" data-tooltip="Toggle Theme (Ctrl+Alt+L)" aria-label="Toggle Theme">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+
+        <button id="mobile-menu-btn" class="mobile-only" type="button" title="Toggle Menu">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
+
+    <div id="mobileNav" class="mobile-nav hidden">
+        <div class="mobile-nav-content">
+            <div id="mobileUsername" class="mobile-user-greeting hidden"></div>
+            
+            <button id="mobileLoginBtn" class="mobile-link" type="button">
+                <i class="fas fa-sign-in-alt"></i> <span>Login</span>
+            </button>
+            <button id="mobileDashboardBtn" class="mobile-link hidden" type="button">
+                <i class="fas fa-columns"></i> <span>Dashboard</span>
+            </button>
+            <button id="mobileThemeToggle" class="mobile-link" type="button">
+                <i class="fas fa-adjust"></i> <span>Switch Theme</span>
+            </button>
         </div>
     </div>
-</div>
 
-<script>
-    const passwordInput = document.getElementById('passwordInput');
-    const resultBox = document.getElementById('result-box');
-    
-    passwordInput.addEventListener('input', async () => {
-        const password = passwordInput.value;
-        
-        if (password.length === 0) {
-            resultBox.classList.add('hidden');
-            return;
-        }
+    <div class="main-wrapper">
+        <section class="tool-section">
+            <div class="card tool-card">
+                <div class="header">
+                    <h2>Test Your Strength</h2>
+                    <p class="subtitle">Enter a password or generate a secure one.</p>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="passwordInput" placeholder="Type a password..." autocomplete="off">
+                    <div class="input-icons">
+                        <i class="fas fa-eye" id="togglePassword" title="Show/Hide" data-tooltip="Show/Hide"></i>
+                        <i class="fas fa-copy" id="copyBtn" title="Copy to Clipboard" data-tooltip="Copy to Clipboard"></i>
+                        <i class="fas fa-random" id="generateBtn" title="Generate Secure Password" data-tooltip="Generate"></i>
+                    </div>
+                </div>
+                <p id="capsLockWarning" class="caps-warning hidden"><i class="fas fa-exclamation-triangle"></i> Caps Lock is ON</p>
+                <p id="whitespaceWarningMain" class="caps-warning hidden"><i class="fas fa-ban"></i> Spaces are not allowed</p>
+                
+                <ul id="main-checklist" class="password-checklist hidden">
+                    <li data-req="upper"><i class="far fa-circle"></i> Uppercase</li>
+                    <li data-req="number"><i class="far fa-circle"></i> Number</li>
+                    <li data-req="special"><i class="far fa-circle"></i> Special Char</li>
+                    <li data-req="length"><i class="far fa-circle"></i> 8+ Chars</li>
+                </ul>
 
-        const response = await fetch('/check_password', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({password: password})
-        });
+                <div id="result-box" class="hidden">
+                    <div class="meter-wrapper">
+                        <div class="meter-container">
+                            <div id="strength-meter"></div>
+                        </div>
+                        <div id="meter-tooltip" class="custom-tooltip"></div>
+                    </div>
+                    <div class="score-row">
+                        <span id="score-text">Weak</span>
+                        <span id="crack-time">Less than a second</span>
+                    </div>
+                    <div class="feedback">
+                        <p id="warning" class="warning"></p>
+                        <ul id="suggestions"></ul>
+                    </div>
+                </div>
 
-        const data = await response.json();
-        updateUI(data);
-    });
+                <div id="chart-container" class="hidden">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-pie"></i> Security Breakdown</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="strengthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    function updateUI(data) {
-        resultBox.classList.remove('hidden');
-        const meter = document.getElementById('strength-meter');
-        const scoreText = document.getElementById('score-text');
-        
-        // Update text
-        document.getElementById('crack-time').innerText = data.crack_time;
-        document.getElementById('warning').innerText = data.feedback.warning || "";
-        
-        // Update suggestions
-        const suggestionsList = document.getElementById('suggestions');
-        suggestionsList.innerHTML = "";
-        data.feedback.suggestions.forEach(s => {
-            let li = document.createElement('li');
-            li.innerText = s;
-            suggestionsList.appendChild(li);
-        });
+        <section class="workflow-section">
+            <div class="section-header center-text">
+                <h2><i class="fas fa-stream"></i> How It Works</h2>
+                <p class="subtitle">Secure identity management in 3 simple steps.</p>
+            </div>
+            <div class="workflow-steps">
+                <div class="step-card">
+                    <div class="step-icon"><i class="fas fa-user-check"></i></div>
+                    <h4>1. Verify Identity</h4>
+                    <p>Sign up securely using email or social login. Enable 2FA for maximum protection.</p>
+                </div>
+                <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+                <div class="step-card">
+                    <div class="step-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    <h4>2. Access Dashboard</h4>
+                    <p>Enter your encrypted hub. Manage your profile and security settings.</p>
+                </div>
+                <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+                <div class="step-card">
+                    <div class="step-icon"><i class="fas fa-key"></i></div>
+                    <h4>3. Secure Vault</h4>
+                    <p>Store credentials with AES-256 encryption. Only you hold the keys.</p>
+                </div>
+            </div>
+        </section>
 
-        // Update Meter Color & Width
-        const colors = ['#ff4d4d', '#ff944d', '#ffda4d', '#aadd4d', '#4dff88'];
-        const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
-        
-        meter.style.width = ((data.score + 1) * 20) + "%";
-        meter.style.backgroundColor = colors[data.score];
-        scoreText.innerText = labels[data.score];
-        scoreText.style.color = colors[data.score];
-    }
-</script>
+        <section class="details-section">
+            <div class="detail-card full-width">
+                <h3><i class="fas fa-bullseye"></i> PassGuard vs. Traditional Checkers</h3>
+                <p>Many websites use simple rules to check passwords (e.g., "Must contain 1 number"). They often rate weak passwords like "P@ssword1" as strong. <strong>PassGuard</strong> is different:</p>
+                <ul class="detail-list">
+                    <li><strong>Beyond Regex:</strong> We don't just check for character types; we analyze the <em>mathematical entropy</em> (randomness) of your input.</li>
+                    <li><strong>Smart Pattern Detection:</strong> We identify common substitutions (like '@' for 'a'), keyboard walks (qwerty), and dictionary words.</li>
+                    <li><strong>Real Security:</strong> We penalize predictable complexity that standard checkers often reward.</li>
+                </ul>
+            </div>
+            <div class="grid-row">
+                <div class="detail-card">
+                    <h3><i class="fas fa-brain"></i> Core Functionality</h3>
+                    <ul>
+                        <li><strong>Entropy Analysis:</strong> Measures randomness.</li>
+                        <li><strong>Pattern Recognition:</strong> Detects keyboard walks and words.</li>
+                        <li><strong>Crack Time:</strong> Estimates offline hashing time.</li>
+                    </ul>
+                </div>
+                <div class="detail-card">
+                    <h3><i class="fas fa-shield-virus"></i> Security Architecture</h3>
+                    <p>We prioritize data integrity and confidentiality:</p>
+                    <ul>
+                        <li><strong>AES-256:</strong> Military-grade encryption for your vault.</li>
+                        <li><strong>Bcrypt:</strong> Secure hashing for authentication.</li>
+                        <li><strong>Zero-Knowledge:</strong> We cannot see your stored passwords.</li>
+                    </ul>
+                </div>
+                <div class="detail-card">
+                    <h3><i class="fas fa-code"></i> Tech Stack</h3>
+                    <p>Full-Stack Identity Platform:</p>
+                    <div class="tags">
+                        <span class="tag">Python Flask</span>
+                        <span class="tag">Supabase (SQL)</span>
+                        <span class="tag">JWT Auth</span>
+                        <span class="tag">Zxcvbn</span>
+                    </div>
+                    <div class="security-badges">
+                        <span class="tag"><i class="fas fa-lock"></i> AES-256</span>
+                        <span class="tag"><i class="fas fa-user-secret"></i> Zero-Knowledge</span>
+                        <span class="tag"><i class="fas fa-shield-virus"></i> CSRF Safe</span>
+                        <span class="tag"><i class="fas fa-database"></i> SQLi Safe</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
+    <footer class="mega-footer">
+        <div class="footer-content">
+            <div class="footer-col brand-col">
+                <div class="footer-brand">
+                    <img src="{{ url_for('static', filename='logo.svg') }}" alt="PassGuard Logo">
+                </div>
+                <ul class="footer-links feature-list">
+                    <li><a href="#" id="passwordHealthLink"><i class="fas fa-heartbeat"></i> Password Health</a></li>
+                    <li><a href="#" onclick="openDashboard('vault-section'); return false;"><i class="fas fa-lock"></i> Secure Vault</a></li>
+                    <li><a href="#" onclick="document.querySelector('.tool-section').scrollIntoView({behavior: 'smooth'}); return false;"><i class="fas fa-magic"></i> Generator Tool</a></li>
+                    <li><a href="#" onclick="openDashboard('profile-section'); return false;"><i class="fas fa-mobile-alt"></i> 2FA Integration</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Solutions</h4>
+                <ul class="footer-links">
+                    <li>Password Auditing</li>
+                    <li>Secure Storage</li>
+                    <li>Breach Detection</li>
+                    <li>Identity Protection</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Developers</h4>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/pranavr06/PassGuard" target="_blank" rel="noopener noreferrer">Source Code</a></li>
+                    <li><a href="https://github.com/pranavr06/PassGuard/issues" target="_blank" rel="noopener noreferrer">Report Bug</a></li>
+                    <li><a href="https://pranavr.netlify.app/projects/passguard" target="_blank" rel="noopener noreferrer">Working</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul class="footer-links">
+                    <li><a href="https://pranavr.netlify.app/" target="_blank" rel="noopener noreferrer">About Pranav R</a></li>
+                    <li><a href="#" id="contactTrigger">Contact Us</a></li>
+                    <li><a href="#" class="legal-trigger" data-tab="tab-privacy">Legal</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Connect with us</h4>
+                <div class="footer-socials">
+                    <a href="https://github.com/pranavr06" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://www.linkedin.com/in/pranavr06/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://x.com/PranavR2006" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+                <p class="footer-disclaimer">Project for educational purposes.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="copyright">
+                &copy; <span id="footerYear"></span> PassGuard All rights reserved.
+            </div>
+            <div class="region-selector">
+                <i class="fas fa-globe"></i> English (India)
+            </div>
+        </div>
+    </footer>
+
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-auth" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalTitle">Login</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="authUsername" placeholder="Username or Email" autocomplete="username" title="Username or Email">
+                
+                <input type="text" id="authPhone" placeholder="Phone Number (Optional)" class="hidden" title="Phone" autocomplete="tel">
+                <p id="authPhoneError" class="error-msg field-error hidden"></p>
+                
+                <input type="text" id="authEmail" placeholder="Email Address (Required)" class="hidden" title="Email" autocomplete="email">
+                
+                <input type="text" id="authDob" placeholder="Date of Birth (DD/MM/YYYY)" class="hidden" title="Date of Birth" maxlength="10">
+                <p id="authDobError" class="error-msg field-error hidden"></p>
+
+                <div class="input-group-auth">
+                    <input type="password" id="authPassword" placeholder="Password" title="Password" autocomplete="current-password">
+                    <i class="fas fa-eye password-toggle-icon" id="toggleAuthPassword" role="button" tabindex="0" aria-label="Toggle password visibility"></i>
+                </div>
+                <p id="whitespaceWarningAuth" class="caps-warning hidden"><i class="fas fa-ban"></i> Spaces are not allowed</p>
+                
+                <ul id="auth-checklist" class="password-checklist hidden">
+                    <li data-req="upper"><i class="far fa-circle"></i> Uppercase</li>
+                    <li data-req="number"><i class="far fa-circle"></i> Number</li>
+                    <li data-req="special"><i class="far fa-circle"></i> Special Char</li>
+                    <li data-req="length"><i class="far fa-circle"></i> 8+ Chars</li>
+                </ul>
+
+                <div class="auth-extras">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe"> Remember Me
+                    </label>
+                    <a href="#" id="forgotPasswordLink" class="forgot-link">Forgot Password?</a>
+                </div>
+            
+                <button id="authSubmitBtn" class="primary-btn" type="button">Login</button>
+                
+                <div class="divider"><span>OR</span></div>
+                
+                <a href="/login/google" class="social-btn google-btn">
+                    <i class="fab fa-google"></i> Continue with Google
+                </a>
+            
+                <a href="/login/github" class="social-btn github-btn">
+                    <i class="fab fa-github"></i> Continue with GitHub
+                </a>
+                
+                <a href="/login/linkedin" class="social-btn linkedin-btn">
+                    <i class="fab fa-linkedin"></i> Continue with LinkedIn
+                </a>
+            
+                <p class="auth-switch">
+                    <span id="switchText">Don't have an account?</span> 
+                    <a href="#" id="switchAuthMode">Register</a>
+                </p>
+                <p id="authMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="forgotModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-forgot" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Reset Password</h2>
+                <p class="subtitle">Enter your email to receive a reset link.</p>
+            </div>
+            <div class="modal-body">
+                <input type="email" id="forgotEmail" placeholder="Enter your email address" autocomplete="email">
+                <button id="forgotSubmitBtn" class="primary-btn" type="button">Send Link</button>
+                <p id="forgotMessage" class="error-msg forgot-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="resetModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Password</h2>
+                <p class="subtitle">Enter your new secure password.</p>
+            </div>
+            <div class="modal-body">
+                <input type="password" id="newResetPassword" placeholder="New Password" autocomplete="off">
+                <button id="resetSubmitBtn" class="primary-btn" type="button">Update Password</button>
+                <p id="resetMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="contactModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-contact" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Contact Support</h2>
+                <p class="subtitle">We'll get back to you via email.</p>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="contactName" placeholder="Your Name">
+                <input type="email" id="contactEmail" placeholder="Your Email">
+                <textarea id="contactMessage" placeholder="How can we help?" rows="4"></textarea>
+                <button id="contactSubmitBtn" class="primary-btn">Send Message</button>
+                <p id="contactMessageStatus" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="login2FAModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-login2fa" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Two-Factor Auth</h2>
+                <p class="subtitle">Enter the code from your authenticator app.</p>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="login2FACode" placeholder="000 000" class="code-input" maxlength="6">
+                <button id="login2FASubmitBtn" class="primary-btn">Verify Login</button>
+                <p id="login2FAMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="setup2FAModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-setup2fa" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Setup 2FA</h2>
+            </div>
+            <div class="modal-body">
+                <p class="setup-instruction">1. Scan this QR Code with <strong>Google Authenticator</strong>.</p>
+                <div class="qr-container">
+                    <img id="qrCodeImage" src="" alt="QR Code">
+                </div>
+                <p class="setup-instruction">2. Enter the code generated.</p>
+                <input type="text" id="setup2FACode" placeholder="123456" class="code-input" maxlength="6">
+                <button id="confirm2FABtn" class="primary-btn">Enable 2FA</button>
+                <p id="setup2FAMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="legalModal" class="modal hidden">
+        <div class="modal-content legal-content">
+            <span class="close-modal close-legal" data-tooltip="Close">&times;</span>
+            <div class="legal-container">
+                <aside class="legal-sidebar">
+                    <div class="legal-header">
+                        <h2><i class="fas fa-scale-balanced"></i> Legal Hub</h2>
+                    </div>
+                    <nav class="legal-nav">
+                        <button class="legal-tab active" data-target="tab-privacy">Privacy Policy</button>
+                        <button class="legal-tab" data-target="tab-cookies">Cookie Policy</button>
+                        <button class="legal-tab" data-target="tab-terms">Terms of Service</button>
+                    </nav>
+                </aside>
+                <main class="legal-main">
+                    <div id="tab-privacy" class="legal-pane active">
+                        <h3>Privacy Policy</h3>
+                        <p class="text-muted legal-date">Last updated: March 2024</p>
+                        <div class="legal-block">
+                            <h4>1. Data Collection</h4>
+                            <p>We do not store the passwords you test. They are processed in memory and discarded immediately. For user accounts, we store only salted, hashed passwords (Bcrypt).</p>
+                        </div>
+                        <div class="legal-block">
+                            <h4>2. User Rights</h4>
+                            <p>You have the right to delete your account and all associated data at any time via the dashboard.</p>
+                        </div>
+                    </div>
+                    <div id="tab-cookies" class="legal-pane hidden">
+                        <h3>Cookie Policy</h3>
+                        <div class="legal-block">
+                            <h4>Essential Cookies</h4>
+                            <p>We use a single secure, HTTP-only cookie (<code>token</code>) to keep you logged in. This is essential for the application to function.</p>
+                        </div>
+                        <div class="legal-block">
+                            <h4>No Tracking</h4>
+                            <p>We do not use Google Analytics, Facebook Pixels, or any third-party tracking cookies.</p>
+                        </div>
+                    </div>
+                    <div id="tab-terms" class="legal-pane hidden">
+                        <h3>Terms of Service</h3>
+                        <div class="legal-block">
+                            <h4>Usage License</h4>
+                            <p>PassGuard is an open-source educational tool. You may use it for personal security auditing. Illegal use is strictly prohibited.</p>
+                        </div>
+                        <div class="legal-block">
+                            <h4>Disclaimer</h4>
+                            <p>The software is provided "as is", without warranty of any kind. We are not liable for any damages arising from the use of this software.</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div id="sessionTimeoutModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="timeout-header"><i class="fas fa-hourglass-half"></i> Session Timeout</h2>
+            </div>
+            <div class="modal-body">
+                <p>You will be logged out in <span id="timeoutCountdown" class="timeout-countdown">60</span> seconds due to inactivity.</p>
+                <button id="stayLoggedInBtn" class="primary-btn timeout-btn">Stay Logged In</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardModal" class="modal hidden">
+        <div class="dashboard-container">
+            <aside class="dash-sidebar">
+                <div class="dash-profile-summary">
+                    <div class="dash-avatar">
+                        <img id="dashProfilePic" src="" alt="User">
+                    </div>
+                    <h3 id="dashUsername">User</h3>
+                    <span class="dash-role" id="dashRole">Member</span>
+                </div>
+                
+                <nav class="dash-nav">
+                    <button class="dash-tab active" data-target="profile-section"><i class="fas fa-user-cog"></i> Profile</button>
+                    <button class="dash-tab" data-target="vault-section"><i class="fas fa-key"></i> Vault</button>
+                    <button class="dash-tab hidden" id="dashAdminTab" data-target="admin-section"><i class="fas fa-shield-alt"></i> Admin</button>
+                </nav>
+
+                <div class="dash-footer">
+                    <button id="dashLogoutBtn" class="dash-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </aside>
+
+            <main class="dash-content">
+                <button class="close-dashboard" type="button" aria-label="Close Dashboard"><i class="fas fa-times"></i></button>
+                
+                <div id="profile-section" class="dash-view active">
+                    <h2>Account Settings</h2>
+                    
+                    <div class="security-card">
+                        <div class="sec-info">
+                            <h3><i class="fas fa-lock"></i> Security</h3>
+                            <p>Two-Factor Authentication (2FA)</p>
+                        </div>
+                        <button id="toggle2FABtn" class="primary-btn sm-btn">Enable 2FA</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="input-group-dash">
+                            <label for="editEmail">Email Address</label>
+                            <input type="text" id="editEmail" placeholder="name@example.com" title="Email Address">
+                        </div>
+                        <div class="input-group-dash">
+                            <label for="editPhone">Phone Number</label>
+                            <input type="text" id="editPhone" placeholder="+1 234 567 890" title="Phone Number">
+                            <p id="editPhoneError" class="error-msg field-error hidden"></p>
+                        </div>
+                        <div class="input-group-dash">
+                            <label for="editDob">Date of Birth</label>
+                            <input type="text" id="editDob" placeholder="DD/MM/YYYY" title="Date of Birth" maxlength="10">
+                            <p id="editDobError" class="error-msg field-error hidden"></p>
+                        </div>
+                    </div>
+                    <div class="dash-actions">
+                        <button id="saveProfileBtn" class="primary-btn" type="button">Save Changes</button>
+                        <button id="mobileActionLogoutBtn" class="danger-btn-text mobile-action-btn" type="button">Logout</button>
+                        <button id="deleteAccountBtn" class="danger-btn-text" type="button">Delete Account</button>
+                    </div>
+                </div>
+
+                <div id="vault-section" class="dash-view hidden">
+                    <div class="section-header">
+                        <h2>Password Vault</h2>
+                        <button id="openAddVaultModal" class="primary-btn sm-btn"><i class="fas fa-plus"></i> Add New</button>
+                    </div>
+
+                    <div class="vault-grid" id="vaultGrid">
+                        <p class="text-muted">Loading vault...</p>
+                    </div>
+                </div>
+
+                <div id="admin-section" class="dash-view hidden">
+                    <h2>User Management</h2>
+                    <div class="table-container">
+                        <table id="userTable">
+                        <thead>
+                            <tr><th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="userTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="addVaultModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-add-vault" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Save Password</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="vaultSiteName" placeholder="Site Name (e.g. Netflix)" autocomplete="off">
+                <input type="text" id="vaultSiteURL" placeholder="URL (Optional)" autocomplete="off">
+                <input type="text" id="vaultUsername" placeholder="Username/Email" autocomplete="off">
+                <input type="password" id="vaultPassword" placeholder="Password" autocomplete="off">
+                <button id="saveVaultBtn" class="primary-btn">Save to Vault</button>
+                <p id="vaultMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <button id="backToTopBtn" class="back-to-top" data-tooltip="Back to Top" aria-label="Back to Top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

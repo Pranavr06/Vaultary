@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" width="250" height="50">
+  <!-- Shield Icon -->
+  <path d="M25 4L6 12v14c0 11 19 20 19 20s19-9 19-20V12L25 4z" fill="#3b82f6"/>
+  <!-- Keyhole Symbol -->
+  <path d="M25 17a4 4 0 0 0-4 4c0 1.5.8 2.8 2 3.5l-1.5 5.5a1 1 0 0 0 1 1.3h5a1 1 0 0 0 1-1.3l-1.5-5.5c1.2-.7 2-2 2-3.5a4 4 0 0 0-4-4z" fill="#ffffff"/>
+  <!-- Brand Text -->
+  <text x="55" y="36" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-weight="bold" font-size="32" fill="#3b82f6">PassGuard</text>
+</svg>
