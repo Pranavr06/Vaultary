@@ -377,7 +377,7 @@ def forgot_password():
     )
     if isinstance(token, bytes): token = token.decode('utf-8')
     
-    link = f"http://127.0.0.1:5000/?reset_token={token}"
+    link = url_for('home', reset_token=token, _external=True)
     try:
         msg = Message('Password Reset', sender=app.config['MAIL_USERNAME'], recipients=[user.email])
         msg.body = f"Reset link (Valid for 10 mins): {link}"
