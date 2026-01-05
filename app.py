@@ -482,12 +482,16 @@ def github_callback():
 @app.route('/login/linkedin')
 def linkedin_login():
     # --- FORCE HTTPS SCHEME HERE ---
-    return linkedin.authorize_redirect(url_for('linkedin_callback', _external=True, _scheme='https'))
+    return linkedin.authorize_redirect(url_for('linkedin_callback', _external=True, _scheme='https'), scope='openid profile email')
 
 @app.route('/login/linkedin/callback')
 def linkedin_callback():
-    token = linkedin.authorize_access_token()
-    user_info = linkedin.userinfo()
+    try:
+        token = linkedin.authorize_access_token()
+        user_info = linkedin.userinfo()
+        if not user_info or not user_info.get('email'):
+            return jsonify({'message': 'Failed to fetch user info. Ensure "Sign In with LinkedIn using OpenID Connect" is enabled in LinkedIn Developer Portal.'}), 400
+    except Exception as e: return jsonify({'message': f'LinkedIn Login Error: {str(e)}'}), 400
     
     user = User.query.filter_by(email=user_info['email']).first()
     if not user:
@@ -496,12 +500,12 @@ def linkedin_callback():
         
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
         user = User(
-            username=user_info['name'], 
+            username=user_info.get('name', user_info['email'].split('@')[0])[:50], 
             email=user_info['email'], 
             password=dummy, 
             is_verified=True, 
             auth_provider='linkedin', 
-            profile_pic=user_info.get('picture', ''),
+            profile_pic=user_info.get('picture') or f"https://ui-avatars.com/api/?name={user_info.get('name', 'User')}&background=random",
             is_admin=is_first_user # Set Admin if first user
         )
         db.session.add(user)
