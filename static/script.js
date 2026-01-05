@@ -872,6 +872,8 @@ function checkLoginState() {
 // --- 3. PROFILE & ADMIN LOGIC ---
 const dashProfilePic = document.getElementById('dashProfilePic');
 const editUsername = document.getElementById('editUsername');
+const usernameCharCount = document.getElementById('usernameCharCount');
+const editUsernameError = document.getElementById('editUsernameError');
 const editEmail = document.getElementById('editEmail');
 const editPhone = document.getElementById('editPhone');
 const editDob = document.getElementById('editDob');
@@ -918,6 +920,8 @@ async function loadProfile() {
         document.getElementById('dashUsername').innerText = data.username;
         document.getElementById('dashRole').innerText = localStorage.getItem('is_admin') === 'true' ? 'Administrator' : 'Member';
         editUsername.value = data.username;
+        usernameCharCount.innerText = `${data.username.length}/50`;
+        editUsernameError.classList.add('hidden');
         editEmail.value = data.email || "";
         editPhone.value = data.phone || "";
         editDob.value = data.dob || "";
@@ -934,16 +938,39 @@ async function loadProfile() {
     }
 }
 
+editUsername.addEventListener('input', () => {
+    const val = editUsername.value;
+    usernameCharCount.innerText = `${val.length}/50`;
+    
+    // SQL Injection & Format Check (Frontend)
+    if (!/^[a-zA-Z0-9_]*$/.test(val)) {
+        editUsernameError.innerText = "Only letters, numbers, and underscores allowed.";
+        editUsernameError.classList.remove('hidden');
+    } else {
+        editUsernameError.classList.add('hidden');
+    }
+});
+
 saveProfileBtn.addEventListener('click', async () => {
     const phoneInput = document.getElementById('editPhone');
     const dobInput = document.getElementById('editDob');
+    const usernameInput = document.getElementById('editUsername');
     
     validateDobLogic(dobInput, document.getElementById('editDobError'));
     if (dobInput.dataset.valid === "false") return;
     if (phoneInput.value && phoneInput.value.length !== 10) return;
     if (phoneInput.dataset.valid === "false") return;
+    
+    // Frontend Block for Invalid Username
+    if (!/^[a-zA-Z0-9_]*$/.test(usernameInput.value)) {
+        editUsernameError.innerText = "Invalid characters in username.";
+        editUsernameError.classList.remove('hidden');
+        return;
+    }
 
     setLoading(saveProfileBtn, true);
+    editUsernameError.classList.add('hidden'); // Clear previous errors
+    
     const res = await fetch('/profile', {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
@@ -961,7 +988,12 @@ saveProfileBtn.addEventListener('click', async () => {
         document.getElementById('dashUsername').innerText = editUsername.value;
         checkLoginState();
     } else {
-        showToast(data.message, "error");
+        if (data.message.includes("Username")) {
+            editUsernameError.innerText = data.message.includes("taken") ? "Username exists, try another one." : data.message;
+            editUsernameError.classList.remove('hidden');
+        } else {
+            showToast(data.message, "error");
+        }
     }
     setLoading(saveProfileBtn, false);
 });

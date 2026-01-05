@@ -533,8 +533,9 @@
 
                     <div class="form-grid">
                         <div class="input-group-dash">
-                            <label for="editUsername">Username</label>
-                            <input type="text" id="editUsername" placeholder="Username" title="Username">
+                            <label for="editUsername">Username <span id="usernameCharCount" class="char-count">0/50</span></label>
+                            <input type="text" id="editUsername" placeholder="Username" title="Username" maxlength="50">
+                            <p id="editUsernameError" class="error-msg field-error hidden"></p>
                         </div>
                         <div class="input-group-dash">
                             <label for="editEmail">Email Address</label>

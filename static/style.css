@@ -462,6 +462,7 @@ ul { padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; }
 .form-grid { display: grid; gap: 20px; max-width: 500px; }
 .input-group-dash label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; }
 .input-group-dash input { width: 100%; margin-bottom: 0; }
+.char-count { float: right; font-size: 0.8rem; font-weight: normal; }
 .dash-actions { margin-top: 30px; display: flex; align-items: center; gap: 20px; }
 .danger-btn-text { 
     background: transparent; border: 1px solid #ef4444; color: #ef4444; 
