@@ -445,7 +445,7 @@ def google_callback():
 
 @app.route('/login/github')
 def github_login():
-    return github.authorize_redirect(url_for('github_callback', _external=True))
+    return github.authorize_redirect(url_for('github_callback', _external=True, _scheme='https'))
 
 @app.route('/login/github/callback')
 def github_callback():
