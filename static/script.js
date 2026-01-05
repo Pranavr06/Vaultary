@@ -652,7 +652,7 @@ window.onclick = (e) => {
     }
 
     // Shake effect for persistent modals (Auth, Dashboard, Legal, Contact)
-    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal) {
+    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal) {
         const content = e.target.querySelector('.modal-content, .dashboard-container');
         if (content) {
             content.classList.remove('shake-anim');
@@ -967,13 +967,20 @@ deleteAccountBtn.addEventListener('click', async () => {
 
 // --- 2FA SETUP FUNCTIONS ---
 async function startSetup2FA() {
-    const res = await fetch('/2fa/setup', { method: 'POST' });
-    const data = await res.json();
-    qrCodeImage.src = data.qr_image;
-    setup2FACode.value = "";
-    setup2FAMessage.innerText = "";
-    dashboardModal.classList.add('hidden');
-    setup2FAModal.classList.remove('hidden');
+    setLoading(toggle2FABtn, true);
+    try {
+        const res = await fetch('/2fa/setup', { method: 'POST' });
+        const data = await res.json();
+        qrCodeImage.src = data.qr_image;
+        setup2FACode.value = "";
+        setup2FAMessage.innerText = "";
+        dashboardModal.classList.add('hidden');
+        setup2FAModal.classList.remove('hidden');
+    } catch (e) {
+        showToast("Error generating QR Code", "error");
+    } finally {
+        setLoading(toggle2FABtn, false);
+    }
 }
 
 confirm2FABtn.addEventListener('click', async () => {
