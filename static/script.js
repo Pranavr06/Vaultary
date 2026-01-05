@@ -652,7 +652,7 @@ window.onclick = (e) => {
     }
 
     // Shake effect for persistent modals (Auth, Dashboard, Legal, Contact)
-    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal) {
+    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal || e.target === login2FAModal || e.target === setup2FAModal) {
         const content = e.target.querySelector('.modal-content, .dashboard-container');
         if (content) {
             content.classList.remove('shake-anim');
