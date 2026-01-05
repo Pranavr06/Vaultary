@@ -14,6 +14,7 @@ import re
 from flask import Flask, render_template, request, jsonify, make_response, url_for, redirect, session, send_from_directory
 from zxcvbn import zxcvbn
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.pool import NullPool
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from functools import wraps
@@ -30,8 +31,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# --- FIX HTTPS ON RENDER ---
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+# --- FIX HTTPS & IP HEADERS ON VERCEL/RENDER ---
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 CORS(app)
 
@@ -41,7 +42,14 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('DATABASE_URL')
 if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = uri
+
+if uri and uri.startswith("postgresql://"):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'poolclass': NullPool,
+        'pool_pre_ping': True
+    }
+
+app.config['SQLALCHEMY_DATABASE_URI'] = uri or 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- SECURITY CONFIG ---
@@ -241,7 +249,8 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         try:
-            token = jwt.encode({'email': new_user.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'])
+            token = jwt.encode({'email': new_user.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
+            if isinstance(token, bytes): token = token.decode('utf-8')
             verify_url = url_for('verify_email', token=token, _external=True)
             msg = Message('Verify Your Vaultary Account', sender=app.config['MAIL_USERNAME'], recipients=[new_user.email])
             msg.body = f'Welcome to Vaultary! Please click this link to verify your email: {verify_url}'
@@ -278,10 +287,12 @@ def login():
             return jsonify({'message': 'Please verify your email first! Check your inbox.'}), 401
 
         if user.is_2fa_enabled:
-            temp_token = jwt.encode({'user_id': user.id, '2fa_pending': True, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=5)}, app.config['SECRET_KEY'])
+            temp_token = jwt.encode({'user_id': user.id, '2fa_pending': True, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=5)}, app.config['SECRET_KEY'], algorithm="HS256")
+            if isinstance(temp_token, bytes): temp_token = temp_token.decode('utf-8')
             return jsonify({'status': '2fa_required', 'temp_token': temp_token})
             
-        token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
+        token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+        if isinstance(token, bytes): token = token.decode('utf-8')
         resp = make_response(jsonify({'status': 'success', 'message': 'Login successful', 'token': token, 'is_admin': user.is_admin}))
         resp.set_cookie('token', token, httponly=True)
         return resp
@@ -304,7 +315,8 @@ def login_verify_2fa():
         code = str(data.get('code', '')).replace(' ', '')
         
         if totp.verify(code, valid_window=2):
-            token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
+            token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+            if isinstance(token, bytes): token = token.decode('utf-8')
             resp = make_response(jsonify({'status': 'success', 'token': token, 'username': user.username, 'is_admin': user.is_admin}))
             resp.set_cookie('token', token, httponly=True)
             return resp
@@ -360,8 +372,10 @@ def forgot_password():
     dynamic_secret = app.config['SECRET_KEY'] + user.password
     token = jwt.encode(
         {'reset_email': user.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10)}, 
-        dynamic_secret
+        dynamic_secret,
+        algorithm="HS256"
     )
+    if isinstance(token, bytes): token = token.decode('utf-8')
     
     link = f"http://127.0.0.1:5000/?reset_token={token}"
     try:
@@ -421,7 +435,8 @@ def google_callback():
         )
         db.session.add(user)
         db.session.commit()
-    token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
+    token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+    if isinstance(token, bytes): token = token.decode('utf-8')
     resp = make_response(redirect('/'))
     resp.set_cookie('token', token, httponly=True)
     resp.set_cookie('social_login_user', user.username, max_age=10)
@@ -456,7 +471,8 @@ def github_callback():
         db.session.add(user)
         db.session.commit()
     
-    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
+    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+    if isinstance(jwt_token, bytes): jwt_token = jwt_token.decode('utf-8')
     response = make_response(redirect('/'))
     response.set_cookie('token', jwt_token, httponly=True)
     response.set_cookie('social_login_user', user.username, max_age=10)
@@ -491,7 +507,8 @@ def linkedin_callback():
         db.session.add(user)
         db.session.commit()
         
-    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'])
+    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+    if isinstance(jwt_token, bytes): jwt_token = jwt_token.decode('utf-8')
     response = make_response(redirect('/'))
     response.set_cookie('token', jwt_token, httponly=True)
     response.set_cookie('social_login_user', user.username, max_age=10)
@@ -686,7 +703,10 @@ def contact_support():
 # --- DATABASE TABLE CREATION (FIXED FOR RENDER) ---
 # We move this OUTSIDE the "if __name__" block so Render runs it
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+    except Exception as e:
+        print(f"DB Creation skipped (Expected during Vercel build): {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)

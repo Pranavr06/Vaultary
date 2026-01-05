@@ -403,7 +403,7 @@
                 <p class="subtitle">Enter the code from your authenticator app.</p>
             </div>
             <div class="modal-body">
-                <input type="text" id="login2FACode" placeholder="000 000" class="code-input" maxlength="6">
+                <input type="text" id="login2FACode" placeholder="000 000" class="code-input" maxlength="7" inputmode="numeric" autocomplete="one-time-code">
                 <button id="login2FASubmitBtn" class="primary-btn">Verify Login</button>
                 <p id="login2FAMessage" class="error-msg"></p>
             </div>
@@ -422,7 +422,7 @@
                     <img id="qrCodeImage" src="" alt="QR Code">
                 </div>
                 <p class="setup-instruction">2. Enter the code generated.</p>
-                <input type="text" id="setup2FACode" placeholder="123456" class="code-input" maxlength="6">
+                <input type="text" id="setup2FACode" placeholder="123456" class="code-input" maxlength="7" inputmode="numeric" autocomplete="one-time-code">
                 <button id="confirm2FABtn" class="primary-btn">Enable 2FA</button>
                 <p id="setup2FAMessage" class="error-msg"></p>
             </div>
