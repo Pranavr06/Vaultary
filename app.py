@@ -423,14 +423,20 @@ def google_callback():
         # --- CHECK IF THIS IS THE FIRST USER ---
         is_first_user = User.query.first() is None
         
+        # --- FIX: Handle Duplicate Usernames ---
+        base_username = user_info.get('name', user_info['email'].split('@')[0])
+        username = base_username[:40] # Truncate to ensure it fits
+        if User.query.filter_by(username=username).first():
+            username = f"{base_username[:35]}_{secrets.token_hex(2)}"
+
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
         user = User(
-            username=user_info['name'], 
+            username=username, 
             email=user_info['email'], 
             password=dummy, 
             is_verified=True, 
             auth_provider='google', 
-            profile_pic=user_info['picture'],
+            profile_pic=user_info.get('picture', f"https://ui-avatars.com/api/?name={username}"),
             is_admin=is_first_user # Set Admin if first user
         )
         db.session.add(user)
