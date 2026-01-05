@@ -871,6 +871,7 @@ function checkLoginState() {
 
 // --- 3. PROFILE & ADMIN LOGIC ---
 const dashProfilePic = document.getElementById('dashProfilePic');
+const editUsername = document.getElementById('editUsername');
 const editEmail = document.getElementById('editEmail');
 const editPhone = document.getElementById('editPhone');
 const editDob = document.getElementById('editDob');
@@ -916,6 +917,7 @@ async function loadProfile() {
         dashProfilePic.src = data.profile_pic;
         document.getElementById('dashUsername').innerText = data.username;
         document.getElementById('dashRole').innerText = localStorage.getItem('is_admin') === 'true' ? 'Administrator' : 'Member';
+        editUsername.value = data.username;
         editEmail.value = data.email || "";
         editPhone.value = data.phone || "";
         editDob.value = data.dob || "";
@@ -946,12 +948,21 @@ saveProfileBtn.addEventListener('click', async () => {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
+            username: editUsername.value,
             email: editEmail.value,
             phone: editPhone.value,
             dob: editDob.value
         })
     });
-    if(res.ok) { showToast("Profile Updated!", "success"); } // TOAST
+    const data = await res.json();
+    if(res.ok) { 
+        showToast("Profile Updated!", "success"); 
+        localStorage.setItem('username', editUsername.value);
+        document.getElementById('dashUsername').innerText = editUsername.value;
+        checkLoginState();
+    } else {
+        showToast(data.message, "error");
+    }
     setLoading(saveProfileBtn, false);
 });
 

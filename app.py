@@ -550,6 +550,16 @@ def profile(current_user):
         return jsonify({'username': current_user.username, 'email': current_user.email, 'phone': current_user.phone, 'dob': current_user.dob, 'profile_pic': current_user.profile_pic, 'is_admin': current_user.is_admin, 'is_2fa_enabled': current_user.is_2fa_enabled})
     if request.method == 'PUT':
         data = request.get_json()
+        
+        # --- USERNAME UPDATE ---
+        new_username = data.get('username')
+        if new_username and new_username != current_user.username:
+            if not re.match("^[a-zA-Z0-9_]*$", new_username):
+                return jsonify({'message': 'Username: letters, numbers, underscores only.'}), 400
+            if User.query.filter_by(username=new_username).first():
+                return jsonify({'message': 'Username already taken.'}), 400
+            current_user.username = new_username
+
         current_user.email = data.get('email', current_user.email)
         
         phone = data.get('phone', current_user.phone)
