@@ -523,8 +523,14 @@ mobileDashboardBtn.addEventListener('click', () => {
 // Close buttons
 document.querySelectorAll('.close-modal').forEach(btn => {
     btn.addEventListener('click', () => {
-        allModals.forEach(m => m.classList.add('hidden'));
-        document.body.style.overflow = '';
+        const modal = btn.closest('.modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            // Only reset overflow if dashboard is NOT open
+            if (dashboardModal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        }
     });
 });
 document.querySelector('.close-dashboard').addEventListener('click', () => {
