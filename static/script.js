@@ -528,7 +528,6 @@ mobileLoginBtn.addEventListener('click', () => {
         if(rememberMe) rememberMe.checked = true;
     }
 });
-mobileDashboardBtn.addEventListener('click', () => { openDashboard('profile-section'); mobileNav.classList.add('hidden'); });
 mobileDashboardBtn.addEventListener('click', () => { 
     openDashboard('profile-section'); 
     mobileNav.classList.add('hidden'); 
@@ -1173,7 +1172,7 @@ async function decryptPassword(id, btn) {
         console.error(e); 
         btn.innerHTML = originalText;
     }
-};
+}
 
 async function deleteVaultItem(id) {
     if(confirm("Delete this password permanently?")) {
@@ -1181,7 +1180,7 @@ async function deleteVaultItem(id) {
         loadVault();
         showToast("Item deleted", "info"); // TOAST
     }
-};
+}
 
 // --- ADMIN LOGIC ---
 async function loadAdminPanel() {
@@ -1211,7 +1210,7 @@ async function deleteUser(id, btn) {
         loadAdminPanel();
         showToast("User deleted", "info"); // TOAST
     }
-};
+}
 
 function setLoading(element, isLoading) {
     if (isLoading) {
