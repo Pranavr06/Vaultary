@@ -11,6 +11,7 @@ import qrcode
 import io
 import base64
 import re
+import csv
 from flask import Flask, render_template, request, jsonify, make_response, url_for, redirect, session, send_from_directory
 from zxcvbn import zxcvbn
 from flask_sqlalchemy import SQLAlchemy
@@ -638,6 +639,30 @@ def manage_vault(current_user):
         db.session.add(new_item)
         db.session.commit()
         return jsonify({'message': 'Password saved to Vault!'})
+
+@app.route('/vault/export', methods=['GET'])
+@token_required
+def export_vault(current_user):
+    items = Vault.query.filter_by(user_id=current_user.id).all()
+    
+    if not items:
+        return jsonify({'message': 'Vault is empty'}), 400
+
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Site Name', 'URL', 'Username', 'Password'])
+
+    for item in items:
+        try:
+            password = item.get_password()
+        except:
+            password = "[Decryption Error]"
+        cw.writerow([item.site_name, item.site_url, item.site_username, password])
+
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=vault_export.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
 
 @app.route('/vault/decrypt/<int:item_id>', methods=['POST'])
 @token_required

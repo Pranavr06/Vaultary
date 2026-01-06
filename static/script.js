@@ -57,6 +57,7 @@ const rememberMe = document.getElementById('rememberMe');
 
 // Vault Elements
 const openAddVaultModalBtn = document.getElementById('openAddVaultModal');
+const exportVaultBtn = document.getElementById('exportVaultBtn');
 const saveVaultBtn = document.getElementById('saveVaultBtn');
 const vaultGrid = document.getElementById('vaultGrid');
 
@@ -1064,6 +1065,35 @@ if(openAddVaultModalBtn) {
 document.querySelector('.close-add-vault').addEventListener('click', () => {
     addVaultModal.classList.add('hidden');
 });
+
+if(exportVaultBtn) {
+    exportVaultBtn.addEventListener('click', async () => {
+        if(!confirm("Download unencrypted CSV? Keep this file safe!")) return;
+        
+        setLoading(exportVaultBtn, true);
+        try {
+            const res = await fetch('/vault/export');
+            if(res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vault_export.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                showToast("Vault exported successfully", "success");
+            } else {
+                const data = await res.json();
+                showToast(data.message || "Export failed", "error");
+            }
+        } catch(e) {
+            showToast("Error exporting vault", "error");
+        }
+        setLoading(exportVaultBtn, false);
+    });
+}
 
 if(saveVaultBtn) {
     saveVaultBtn.addEventListener('click', async () => {

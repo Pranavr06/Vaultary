@@ -562,7 +562,10 @@
                 <div id="vault-section" class="dash-view hidden">
                     <div class="section-header">
                         <h2>Password Vault</h2>
-                        <button id="openAddVaultModal" class="primary-btn sm-btn"><i class="fas fa-plus"></i> Add New</button>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="exportVaultBtn" class="nav-btn outline sm-btn" style="border: 1px solid var(--border); color: var(--text-muted);"><i class="fas fa-file-csv"></i> Export CSV</button>
+                            <button id="openAddVaultModal" class="primary-btn sm-btn"><i class="fas fa-plus"></i> Add New</button>
+                        </div>
                     </div>
 
                     <div class="vault-grid" id="vaultGrid">
