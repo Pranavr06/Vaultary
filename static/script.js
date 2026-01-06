@@ -125,24 +125,6 @@ if (passwordHealthLink) {
     });
 }
 
-// --- FOOTER & LINKEDIN LISTENERS (CSP FIX) ---
-const footerVaultLink = document.getElementById('footerVaultLink');
-const footerGenLink = document.getElementById('footerGenLink');
-const footer2FALink = document.getElementById('footer2FALink');
-const linkedinBtn = document.getElementById('linkedinBtn');
-
-if(footerVaultLink) footerVaultLink.addEventListener('click', (e) => { e.preventDefault(); openDashboard('vault-section'); });
-if(footerGenLink) footerGenLink.addEventListener('click', (e) => { e.preventDefault(); document.querySelector('.tool-section').scrollIntoView({behavior: 'smooth'}); });
-if(footer2FALink) footer2FALink.addEventListener('click', (e) => { e.preventDefault(); openDashboard('profile-section'); });
-if(linkedinBtn) linkedinBtn.addEventListener('click', (e) => { e.preventDefault(); });
-
-// --- ADMIN TABLE DELEGATION (CSP FIX) ---
-const userTableBody = document.getElementById('userTableBody');
-if(userTableBody) userTableBody.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if(btn && btn.dataset.action === 'delete-user') deleteUser(btn.dataset.id, btn);
-});
-
 toggleBtn.addEventListener('click', () => {
     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
     passwordInput.setAttribute('type', type);
@@ -528,6 +510,7 @@ mobileLoginBtn.addEventListener('click', () => {
         if(rememberMe) rememberMe.checked = true;
     }
 });
+mobileDashboardBtn.addEventListener('click', () => { openDashboard('profile-section'); mobileNav.classList.add('hidden'); });
 mobileDashboardBtn.addEventListener('click', () => { 
     openDashboard('profile-section'); 
     mobileNav.classList.add('hidden'); 
@@ -1137,9 +1120,9 @@ async function loadVault() {
                             <i class="fas fa-user"></i> ${item.site_username}
                         </div>
                         <div class="vault-actions">
-                            <button class="vault-btn" data-action="copy-user" data-username="${item.site_username}" data-tooltip="Copy Username"><i class="fas fa-copy"></i> User</button>
-                            <button class="vault-btn" data-action="decrypt" data-id="${item.id}" data-tooltip="Copy Password"><i class="fas fa-key"></i> Copy Pass</button>
-                            <button class="vault-btn delete" data-action="delete" data-id="${item.id}" data-tooltip="Delete" aria-label="Delete Item"><i class="fas fa-trash"></i></button>
+                            <button class="vault-btn" onclick="copyUsername('${item.site_username}')" data-tooltip="Copy Username"><i class="fas fa-copy"></i> User</button>
+                            <button class="vault-btn" onclick="decryptPassword(${item.id}, this)" data-tooltip="Copy Password"><i class="fas fa-key"></i> Copy Pass</button>
+                            <button class="vault-btn delete" onclick="deleteVaultItem(${item.id})" data-tooltip="Delete" aria-label="Delete Item"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 `;
@@ -1148,12 +1131,12 @@ async function loadVault() {
     } catch(e) { vaultGrid.innerHTML = '<p class="error-msg">Error loading vault</p>'; }
 }
 
-function copyUsername(text) {
+window.copyUsername = (text) => {
     navigator.clipboard.writeText(text);
     showToast("Username copied!", "info"); // TOAST
 }
 
-async function decryptPassword(id, btn) {
+window.decryptPassword = async (id, btn) => {
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     try {
@@ -1172,15 +1155,15 @@ async function decryptPassword(id, btn) {
         console.error(e); 
         btn.innerHTML = originalText;
     }
-}
+};
 
-async function deleteVaultItem(id) {
+window.deleteVaultItem = async (id) => {
     if(confirm("Delete this password permanently?")) {
         await fetch(`/vault/delete/${id}`, { method: 'DELETE' });
         loadVault();
         showToast("Item deleted", "info"); // TOAST
     }
-}
+};
 
 // --- ADMIN LOGIC ---
 async function loadAdminPanel() {
@@ -1196,21 +1179,21 @@ async function loadAdminPanel() {
                     <td>${u.username} ${u.is_admin ? '🛡️' : ''}</td>
                     <td>${u.email || '-'}</td>
                     <td>${u.auth_provider}</td>
-                    <td>${!u.is_admin ? `<button data-action="delete-user" data-id="${u.id}" class="danger-btn btn-sm">Delete</button>` : '-'}</td>
+                    <td>${!u.is_admin ? `<button onclick="deleteUser(${u.id}, this)" class="danger-btn btn-sm">Delete</button>` : '-'}</td>
                 </tr>
             `;
         });
     }
 }
 
-async function deleteUser(id, btn) {
+window.deleteUser = async (id, btn) => {
     if(confirm("Delete this user?")) {
         if(btn) setLoading(btn, true);
         await fetch(`/admin/delete/${id}`, { method: 'DELETE' });
         loadAdminPanel();
         showToast("User deleted", "info"); // TOAST
     }
-}
+};
 
 function setLoading(element, isLoading) {
     if (isLoading) {
