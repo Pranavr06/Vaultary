@@ -14,7 +14,7 @@
 ## ✨ Features
 
 ### 🔐 Security & Authentication
-* **Multi-Provider OAuth:** Seamless login with **Google**, **GitHub**, and **LinkedIn** using OpenID Connect.
+* * **Multi-Provider OAuth:** Login with Google and GitHub.
 * **Two-Factor Authentication (2FA):** Custom Time-based One-Time Password (TOTP) implementation compatible with Google Authenticator.
 * **Bcrypt Hashing:** Passwords are never stored in plain text.
 
