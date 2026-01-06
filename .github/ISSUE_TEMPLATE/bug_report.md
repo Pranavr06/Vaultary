@@ -20,3 +20,5 @@ To ensure system stability for the final presentation, the **LinkedIn Login butt
 
 ## ✅ Proposed Fix (In Progress)
 I'm currently refactoring `app.py` to force the `_scheme='https'` parameter during the OAuth handshake.
+
+Date Detected: January 6, 2026
