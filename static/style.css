@@ -627,6 +627,11 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 .vault-card h4 { color: var(--text-main); margin-bottom: 5px; font-size: 1.1rem; }
 .vault-card .site-url { font-size: 0.8rem; color: var(--accent); text-decoration: none; margin-bottom: 15px; display: block; }
 .vault-card .username-display { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+.vault-card .password-display { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+.vault-card .password-display span { flex: 1; word-break: break-all; }
+.vault-card .masked-pass { font-family: monospace; letter-spacing: 3px; }
+.toggle-vault-pass { cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+.toggle-vault-pass:hover { color: var(--accent); }
 .vault-actions { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
 .vault-btn { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
 .vault-btn:hover { background: var(--bg-color); color: var(--text-main); border-color: var(--accent); }

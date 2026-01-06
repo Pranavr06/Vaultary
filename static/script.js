@@ -1149,6 +1149,11 @@ async function loadVault() {
                         <div class="username-display">
                             <i class="fas fa-user"></i> ${item.site_username}
                         </div>
+                        <div class="password-display">
+                            <i class="fas fa-lock"></i>
+                            <span id="pass-display-${item.id}" class="masked-pass">••••••••</span>
+                            <i class="fas fa-eye toggle-vault-pass" onclick="toggleVaultPassword(${item.id}, this)" title="Show/Hide Password"></i>
+                        </div>
                         <div class="vault-actions">
                             <button class="vault-btn" onclick="copyUsername('${item.site_username}')" data-tooltip="Copy Username"><i class="fas fa-copy"></i> User</button>
                             <button class="vault-btn" onclick="decryptPassword(${item.id}, this)" data-tooltip="Copy Password"><i class="fas fa-key"></i> Copy Pass</button>
@@ -1165,6 +1170,29 @@ window.copyUsername = (text) => {
     navigator.clipboard.writeText(text);
     showToast("Username copied!", "info"); // TOAST
 }
+
+window.toggleVaultPassword = async (id, icon) => {
+    const displaySpan = document.getElementById(`pass-display-${id}`);
+    const isHidden = displaySpan.classList.contains('masked-pass');
+    
+    if (isHidden) {
+        const originalClass = icon.className;
+        icon.className = 'fas fa-spinner fa-spin';
+        try {
+            const res = await fetch(`/vault/decrypt/${id}`, { method: 'POST' });
+            if(res.ok) {
+                const data = await res.json();
+                displaySpan.innerText = data.password;
+                displaySpan.classList.remove('masked-pass');
+                icon.className = 'fas fa-eye-slash toggle-vault-pass';
+            } else { showToast("Error decrypting", "error"); icon.className = originalClass; }
+        } catch(e) { icon.className = originalClass; }
+    } else {
+        displaySpan.innerText = '••••••••';
+        displaySpan.classList.add('masked-pass');
+        icon.className = 'fas fa-eye toggle-vault-pass';
+    }
+};
 
 window.decryptPassword = async (id, btn) => {
     const originalText = btn.innerHTML;
