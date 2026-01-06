@@ -495,7 +495,7 @@ ul { padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; }
 
 /* Forgot Password Link Style */
 .auth-extras { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: -10px; }
-.forgot-link { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; }
+.forgot-link { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; margin-left: auto; }
 .forgot-link:hover { color: var(--accent); text-decoration: underline; }
 .remember-me { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .remember-me input { width: auto; margin: 0; cursor: pointer; }

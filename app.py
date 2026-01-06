@@ -416,6 +416,25 @@ def reset_password_confirm():
 
 # --- SOCIAL LOGIN ROUTES ---
 
+def generate_unique_username(base_name):
+    # Remove spaces and keep only allowed chars (letters, numbers, underscores)
+    clean_name = re.sub(r'[^a-zA-Z0-9_]', '', base_name)
+    if not clean_name: clean_name = f"User{secrets.token_hex(3)}"
+    
+    # Truncate to ensure room for suffix
+    clean_name = clean_name[:40]
+    
+    if not User.query.filter_by(username=clean_name).first():
+        return clean_name
+        
+    # Start checking from 100
+    counter = 100
+    while True:
+        new_name = f"{clean_name}{counter}"
+        if not User.query.filter_by(username=new_name).first():
+            return new_name
+        counter += 1
+
 @app.route('/login/google')
 def google_login(): return google.authorize_redirect(url_for('google_callback', _external=True))
 
@@ -430,9 +449,7 @@ def google_callback():
         
         # --- FIX: Handle Duplicate Usernames ---
         base_username = user_info.get('name', user_info['email'].split('@')[0])
-        username = base_username[:40] # Truncate to ensure it fits
-        if User.query.filter_by(username=username).first():
-            username = f"{base_username[:35]}_{secrets.token_hex(2)}"
+        username = generate_unique_username(base_username)
 
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
         user = User(
@@ -471,9 +488,7 @@ def github_callback():
         
         # --- FIX: Handle Duplicate Usernames ---
         base_username = resp['login']
-        username = base_username[:40]
-        if User.query.filter_by(username=username).first():
-            username = f"{base_username[:35]}_{secrets.token_hex(2)}"
+        username = generate_unique_username(base_username)
 
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
         user = User(
@@ -517,9 +532,7 @@ def linkedin_callback():
         
         # --- FIX: Handle Duplicate Usernames ---
         base_username = user_info.get('name', user_info['email'].split('@')[0])
-        username = base_username[:40]
-        if User.query.filter_by(username=username).first():
-            username = f"{base_username[:35]}_{secrets.token_hex(2)}"
+        username = generate_unique_username(base_username)
 
         dummy = bcrypt.generate_password_hash(secrets.token_urlsafe(16)).decode('utf-8')
         user = User(

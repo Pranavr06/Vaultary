@@ -53,7 +53,6 @@ const toggleAuthPassword = document.getElementById('toggleAuthPassword');
 const authSubmitBtn = document.getElementById('authSubmitBtn');
 const authMessage = document.getElementById('authMessage');
 const switchAuthMode = document.getElementById('switchAuthMode');
-const rememberMe = document.getElementById('rememberMe');
 
 // Vault Elements
 const openAddVaultModalBtn = document.getElementById('openAddVaultModal');
@@ -81,6 +80,30 @@ const toggle2FABtn = document.getElementById('toggle2FABtn');
 const stayLoggedInBtn = document.getElementById('stayLoggedInBtn');
 let tempLoginToken = null;
 
+// --- GLOBAL INPUT RESTRICTIONS ---
+// 1. Block Emojis in ALL inputs
+document.addEventListener('input', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        // Regex matches extended pictographs and emoji presentation characters
+        const emojiRegex = /(\p{Extended_Pictographic}|\p{Emoji_Presentation})/gu;
+        if (emojiRegex.test(e.target.value)) {
+            e.target.value = e.target.value.replace(emojiRegex, '');
+            showToast("Emojis are not allowed", "error");
+        }
+    }
+});
+
+// 2. Force No Spaces in Usernames
+[authUsername, editUsername].forEach(input => {
+    if(input) {
+        input.addEventListener('input', () => {
+            if (input.value.includes(' ')) {
+                input.value = input.value.replace(/\s/g, '');
+            }
+        });
+    }
+});
+
 // --- TOAST NOTIFICATION LOGIC ---
 const toastBox = document.getElementById('toast-box');
 
@@ -107,13 +130,6 @@ window.addEventListener('load', () => {
     // Prevent Auto-fill / Clear Inputs
     setTimeout(() => {
         document.querySelectorAll('input').forEach(input => input.value = '');
-        
-        // Check for saved username (Remember Me)
-        const savedUser = localStorage.getItem('saved_username');
-        if (savedUser) {
-            authUsername.value = savedUser;
-            if(rememberMe) rememberMe.checked = true;
-        }
     }, 100);
 });
 
@@ -477,11 +493,6 @@ let isLoginMode = true;
 loginBtn.addEventListener('click', () => { 
     authModal.classList.remove('hidden'); 
     document.body.style.overflow = 'hidden';
-    const savedUser = localStorage.getItem('saved_username');
-    if(savedUser) {
-        authUsername.value = savedUser;
-        if(rememberMe) rememberMe.checked = true;
-    }
 });
 dashboardBtn.addEventListener('click', () => openDashboard('profile-section'));
 
@@ -504,11 +515,6 @@ mobileLoginBtn.addEventListener('click', () => {
     icon.classList.remove('fa-times');
     icon.classList.add('fa-bars');
     document.body.style.overflow = 'hidden';
-    const savedUser = localStorage.getItem('saved_username');
-    if(savedUser) {
-        authUsername.value = savedUser;
-        if(rememberMe) rememberMe.checked = true;
-    }
 });
 mobileDashboardBtn.addEventListener('click', () => { openDashboard('profile-section'); mobileNav.classList.add('hidden'); });
 mobileDashboardBtn.addEventListener('click', () => { 
@@ -692,7 +698,7 @@ switchAuthMode.addEventListener('click', (e) => {
         authDob.classList.add('hidden');
         document.querySelector('.auth-extras').classList.remove('hidden');
         authChecklist.classList.add('hidden');
-        authPassword.setAttribute('autocomplete', 'current-password');
+        authPassword.setAttribute('autocomplete', 'off');
     } else {
         title.innerText = "Create Account";
         authSubmitBtn.innerText = "Register";
@@ -702,7 +708,7 @@ switchAuthMode.addEventListener('click', (e) => {
         authPhone.classList.remove('hidden'); 
         authDob.classList.remove('hidden');
         document.querySelector('.auth-extras').classList.add('hidden');
-        authPassword.setAttribute('autocomplete', 'off');
+        authPassword.setAttribute('autocomplete', 'new-password');
     }
     authMessage.innerText = "";
 });
@@ -758,19 +764,12 @@ authSubmitBtn.addEventListener('click', async () => {
                     tempLoginToken = data.temp_token;
                     authUsername.value = ""; authPassword.value = "";
                 } else {
-                    localStorage.setItem('username', username);
-                    localStorage.setItem('is_admin', data.is_admin);
+                    sessionStorage.setItem('username', username);
+                    sessionStorage.setItem('is_admin', data.is_admin);
                     checkLoginState();
                     authModal.classList.add('hidden');
                     document.body.style.overflow = '';
                     authUsername.value = ""; authPassword.value = "";
-                    
-                    // Handle Remember Me
-                    if (rememberMe && rememberMe.checked) {
-                        localStorage.setItem('saved_username', username);
-                    } else {
-                        localStorage.removeItem('saved_username');
-                    }
                     
                     showToast("Login Successful!", "success"); // TOAST
                 }
@@ -809,8 +808,8 @@ login2FASubmitBtn.addEventListener('click', async () => {
         const data = await res.json();
         
         if(data.status === 'success') {
-            localStorage.setItem('username', data.username);
-            localStorage.setItem('is_admin', data.is_admin);
+            sessionStorage.setItem('username', data.username);
+            sessionStorage.setItem('is_admin', data.is_admin);
             checkLoginState();
             login2FAModal.classList.add('hidden');
             document.body.style.overflow = '';
@@ -827,8 +826,8 @@ document.getElementById('dashLogoutBtn').addEventListener('click', async () => {
     const btn = document.getElementById('dashLogoutBtn');
     setLoading(btn, true);
     await fetch('/logout');
-    localStorage.removeItem('username');
-    localStorage.removeItem('is_admin');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('is_admin');
     dashboardModal.classList.add('hidden');
     document.body.style.overflow = '';
     checkLoginState();
@@ -844,8 +843,8 @@ if(mobileActionLogoutBtn) {
 }
 
 function checkLoginState() {
-    const user = localStorage.getItem('username');
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    const user = sessionStorage.getItem('username');
+    const isAdmin = sessionStorage.getItem('is_admin') === 'true';
     const dashAdminTab = document.getElementById('dashAdminTab');
 
     if (user) {
@@ -898,7 +897,7 @@ dashTabs.forEach(tab => {
 });
 
 function openDashboard(defaultTab) {
-    if (!localStorage.getItem('username')) {
+    if (!sessionStorage.getItem('username')) {
         authModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         showToast("Please login to access this feature", "info");
@@ -918,7 +917,7 @@ async function loadProfile() {
         const data = await res.json();
         dashProfilePic.src = data.profile_pic;
         document.getElementById('dashUsername').innerText = data.username;
-        document.getElementById('dashRole').innerText = localStorage.getItem('is_admin') === 'true' ? 'Administrator' : 'Member';
+        document.getElementById('dashRole').innerText = sessionStorage.getItem('is_admin') === 'true' ? 'Administrator' : 'Member';
         editUsername.value = data.username;
         usernameCharCount.innerText = `${data.username.length}/50`;
         editUsernameError.classList.add('hidden');
@@ -984,7 +983,7 @@ saveProfileBtn.addEventListener('click', async () => {
     const data = await res.json();
     if(res.ok) { 
         showToast("Profile Updated!", "success"); 
-        localStorage.setItem('username', editUsername.value);
+        sessionStorage.setItem('username', editUsername.value);
         document.getElementById('dashUsername').innerText = editUsername.value;
         checkLoginState();
     } else {
@@ -1249,8 +1248,8 @@ function checkSocialLogin() {
     const socialAdmin = getCookie('social_login_admin');
 
     if (socialUser) {
-        localStorage.setItem('username', decodeURIComponent(socialUser));
-        localStorage.setItem('is_admin', socialAdmin === 'true');
+        sessionStorage.setItem('username', decodeURIComponent(socialUser));
+        sessionStorage.setItem('is_admin', socialAdmin === 'true');
         document.cookie = "social_login_user=; Max-Age=0";
         document.cookie = "social_login_admin=; Max-Age=0";
         checkLoginState();
@@ -1352,14 +1351,14 @@ function resetIdleTimer() {
         sessionTimeoutModal.classList.add('hidden');
     }
 
-    if (localStorage.getItem('username')) {
+    if (sessionStorage.getItem('username')) {
         warningTimer = setTimeout(showSessionWarning, WARNING_LIMIT);
         idleTimer = setTimeout(doAutoLogout, IDLE_LIMIT);
     }
 }
 
 function showSessionWarning() {
-    if (!localStorage.getItem('username')) return;
+    if (!sessionStorage.getItem('username')) return;
     sessionTimeoutModal.classList.remove('hidden');
     
     let seconds = 60;
@@ -1374,7 +1373,7 @@ function showSessionWarning() {
 }
 
 function doAutoLogout() {
-    if (localStorage.getItem('username')) {
+    if (sessionStorage.getItem('username')) {
         sessionTimeoutModal.classList.add('hidden');
         document.getElementById('dashLogoutBtn').click();
         showToast("Session timed out", "error");
