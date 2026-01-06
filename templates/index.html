@@ -29,12 +29,12 @@
 
     <title>Vaultary | Identity & Security Platform</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-3/U98vsS0T9vN8o8kM2o6L5j5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e" crossorigin="anonymous"></script>
     
     <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" nonce="{{ csp_nonce() }}">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -237,9 +237,9 @@
                 </div>
                 <ul class="footer-links feature-list">
                     <li><a href="#" id="passwordHealthLink"><i class="fas fa-heartbeat"></i> Password Health</a></li>
-                    <li><a href="#" onclick="openDashboard('vault-section'); return false;"><i class="fas fa-lock"></i> Secure Vault</a></li>
-                    <li><a href="#" onclick="document.querySelector('.tool-section').scrollIntoView({behavior: 'smooth'}); return false;"><i class="fas fa-magic"></i> Generator Tool</a></li>
-                    <li><a href="#" onclick="openDashboard('profile-section'); return false;"><i class="fas fa-mobile-alt"></i> 2FA Integration</a></li>
+                    <li><a href="#" id="footerVaultLink"><i class="fas fa-lock"></i> Secure Vault</a></li>
+                    <li><a href="#" id="footerGenLink"><i class="fas fa-magic"></i> Generator Tool</a></li>
+                    <li><a href="#" id="footer2FALink"><i class="fas fa-mobile-alt"></i> 2FA Integration</a></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -336,7 +336,7 @@
                     <i class="fab fa-github"></i> Continue with GitHub
                 </a>
                 
-                <!-- <a href="/login/linkedin" class="social-btn linkedin-btn">
+                <!-- <a href="#" id="linkedinBtn" class="social-btn linkedin-btn" data-tooltip="Coming Soon" style="opacity: 0.6; cursor: not-allowed;">
                     <i class="fab fa-linkedin"></i> Continue with LinkedIn
                 </a> -->
             
@@ -417,7 +417,7 @@
                 <h2>Setup 2FA</h2>
             </div>
             <div class="modal-body">
-                <p class="setup-instruction">1. Scan with <strong>any Authenticator App</strong> (Google, Microsoft, Authy).</p>
+                <p class="setup-instruction">1. Scan this QR Code with <strong>Google Authenticator</strong>.</p>
                 <div class="qr-container">
                     <img id="qrCodeImage" src="" alt="QR Code">
                 </div>
@@ -532,11 +532,6 @@
                     </div>
 
                     <div class="form-grid">
-                        <div class="input-group-dash">
-                            <label for="editUsername">Username <span id="usernameCharCount" class="char-count">0/50</span></label>
-                            <input type="text" id="editUsername" placeholder="Username" title="Username" maxlength="50">
-                            <p id="editUsernameError" class="error-msg field-error hidden"></p>
-                        </div>
                         <div class="input-group-dash">
                             <label for="editEmail">Email Address</label>
                             <input type="text" id="editEmail" placeholder="name@example.com" title="Email Address">

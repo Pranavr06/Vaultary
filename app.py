@@ -62,12 +62,14 @@ limiter = Limiter(
 
 csp = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
+    'script-src': ["'self'", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
     'style-src': ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
     'font-src': ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
-    'img-src': ["'self'", "data:", "ui-avatars.com", "*.googleusercontent.com", "*.githubusercontent.com", "*.licdn.com", "media.licdn.com"]
+    'img-src': ["'self'", "data:", "ui-avatars.com", "*.googleusercontent.com", "*.githubusercontent.com", "*.licdn.com", "media.licdn.com"],
+    'object-src': ["'none'"],
+    'base-uri': ["'self'"]
 }
-talisman = Talisman(app, force_https=False, content_security_policy=csp)
+talisman = Talisman(app, force_https=False, content_security_policy=csp, content_security_policy_nonce_in=['script-src'])
 
 # --- OAUTH KEYS ---
 app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
