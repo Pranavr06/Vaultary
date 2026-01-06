@@ -1390,3 +1390,29 @@ document.onmousemove = resetIdleTimer;
 document.onkeypress = resetIdleTimer;
 document.onclick = resetIdleTimer;
 document.onscroll = resetIdleTimer;
+
+// --- FOOTER LINKS ---
+const secureVaultLink = document.getElementById('secureVaultLink');
+const generatorToolLink = document.getElementById('generatorToolLink');
+const twoFactorIntegrationLink = document.getElementById('twoFactorIntegrationLink');
+
+if (secureVaultLink) {
+    secureVaultLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        openDashboard('vault-section');
+    });
+}
+
+if (generatorToolLink) {
+    generatorToolLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector('.tool-section').scrollIntoView({ behavior: 'smooth' });
+    });
+}
+
+if (twoFactorIntegrationLink) {
+    twoFactorIntegrationLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        openDashboard('profile-section');
+    });
+}

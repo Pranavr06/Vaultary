@@ -29,12 +29,12 @@
 
     <title>Vaultary | Identity & Security Platform</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
     
     <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" nonce="{{ csp_nonce() }}">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -237,9 +237,9 @@
                 </div>
                 <ul class="footer-links feature-list">
                     <li><a href="#" id="passwordHealthLink"><i class="fas fa-heartbeat"></i> Password Health</a></li>
-                    <li><a href="#" onclick="openDashboard('vault-section'); return false;"><i class="fas fa-lock"></i> Secure Vault</a></li>
-                    <li><a href="#" onclick="document.querySelector('.tool-section').scrollIntoView({behavior: 'smooth'}); return false;"><i class="fas fa-magic"></i> Generator Tool</a></li>
-                    <li><a href="#" onclick="openDashboard('profile-section'); return false;"><i class="fas fa-mobile-alt"></i> 2FA Integration</a></li>
+                    <li><a href="#" id="secureVaultLink"><i class="fas fa-lock"></i> Secure Vault</a></li>
+                    <li><a href="#" id="generatorToolLink"><i class="fas fa-magic"></i> Generator Tool</a></li>
+                    <li><a href="#" id="twoFactorIntegrationLink"><i class="fas fa-mobile-alt"></i> 2FA Integration</a></li>
                 </ul>
             </div>
             <div class="footer-col">
