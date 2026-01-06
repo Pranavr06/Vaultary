@@ -106,4 +106,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-Made by Pranav R
+Made by [Pranav R](https://pranavr.netlify.app/)
