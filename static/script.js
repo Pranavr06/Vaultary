@@ -1158,12 +1158,12 @@ async function loadVault() {
                         <div class="password-display">
                             <i class="fas fa-lock"></i>
                             <span id="pass-display-${item.id}" class="masked-pass">••••••••</span>
-                            <i class="fas fa-eye toggle-vault-pass" onclick="toggleVaultPassword(${item.id}, this)" title="Show/Hide Password"></i>
+                            <i class="fas fa-eye toggle-vault-pass action-btn" data-action="toggle-pass" data-id="${item.id}" title="Show/Hide Password"></i>
                         </div>
                         <div class="vault-actions">
-                            <button class="vault-btn" onclick="copyUsername('${item.site_username}')" data-tooltip="Copy Username"><i class="fas fa-copy"></i> User</button>
-                            <button class="vault-btn" onclick="decryptPassword(${item.id}, this)" data-tooltip="Copy Password"><i class="fas fa-key"></i> Copy Pass</button>
-                            <button class="vault-btn delete" onclick="deleteVaultItem(${item.id})" data-tooltip="Delete" aria-label="Delete Item"><i class="fas fa-trash"></i></button>
+                            <button class="vault-btn action-btn" data-action="copy-user" data-username="${item.site_username}" data-tooltip="Copy Username"><i class="fas fa-copy"></i> User</button>
+                            <button class="vault-btn action-btn" data-action="copy-pass" data-id="${item.id}" data-tooltip="Copy Password"><i class="fas fa-key"></i> Copy Pass</button>
+                            <button class="vault-btn delete action-btn" data-action="delete" data-id="${item.id}" data-tooltip="Delete" aria-label="Delete Item"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 `;
@@ -1171,6 +1171,25 @@ async function loadVault() {
         }
     } catch(e) { vaultGrid.innerHTML = '<p class="error-msg">Error loading vault</p>'; }
 }
+
+// Event Delegation for Vault Grid (Fixes CSP Inline Handler Issues)
+vaultGrid.addEventListener('click', (e) => {
+    const target = e.target.closest('.action-btn');
+    if (!target) return;
+
+    const action = target.dataset.action;
+    const id = target.dataset.id;
+
+    if (action === 'toggle-pass') {
+        toggleVaultPassword(id, target);
+    } else if (action === 'copy-user') {
+        copyUsername(target.dataset.username);
+    } else if (action === 'copy-pass') {
+        decryptPassword(id, target);
+    } else if (action === 'delete') {
+        deleteVaultItem(id);
+    }
+});
 
 window.copyUsername = (text) => {
     navigator.clipboard.writeText(text);
@@ -1190,13 +1209,13 @@ window.toggleVaultPassword = async (id, icon) => {
                 const data = await res.json();
                 displaySpan.innerText = data.password;
                 displaySpan.classList.remove('masked-pass');
-                icon.className = 'fas fa-eye-slash toggle-vault-pass';
+                icon.className = 'fas fa-eye-slash toggle-vault-pass action-btn';
             } else { showToast("Error decrypting", "error"); icon.className = originalClass; }
         } catch(e) { icon.className = originalClass; }
     } else {
         displaySpan.innerText = '••••••••';
         displaySpan.classList.add('masked-pass');
-        icon.className = 'fas fa-eye toggle-vault-pass';
+        icon.className = 'fas fa-eye toggle-vault-pass action-btn';
     }
 };
 
