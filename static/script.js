@@ -913,6 +913,11 @@ function openDashboard(defaultTab) {
 
 async function loadProfile() {
     const res = await fetch('/profile');
+    if (res.status === 401 || res.status === 403) {
+        document.getElementById('dashLogoutBtn').click();
+        return;
+    }
+
     if(res.ok) {
         const data = await res.json();
         dashProfilePic.src = data.profile_pic;
@@ -1103,6 +1108,11 @@ async function loadVault() {
     vaultGrid.innerHTML = '<p class="text-muted">Loading...</p>';
     try {
         const res = await fetch('/vault');
+        if (res.status === 401 || res.status === 403) {
+            document.getElementById('dashLogoutBtn').click();
+            return;
+        }
+
         if(res.ok) {
             const items = await res.json();
             if(items.length === 0) {

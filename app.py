@@ -38,7 +38,7 @@ CORS(app)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Handle Supabase/Postgres URL fix (postgres:// -> postgresql://)
@@ -149,6 +149,7 @@ class Vault(db.Model):
     encrypted_password = db.Column(db.LargeBinary, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
+    @staticmethod
     def get_encryption_key():
         key = os.getenv('VAULT_KEY') or os.getenv('ENCRYPTION_KEY')
         if not key:
@@ -299,7 +300,7 @@ def login():
         token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
         if isinstance(token, bytes): token = token.decode('utf-8')
         resp = make_response(jsonify({'status': 'success', 'message': 'Login successful', 'token': token, 'is_admin': user.is_admin}))
-        resp.set_cookie('token', token, httponly=True, secure=True, samesite='Lax')
+        resp.set_cookie('token', token, httponly=True, secure=False, samesite='Lax')
         return resp
         
     return jsonify({'message': 'Invalid credentials'}), 401
@@ -323,7 +324,7 @@ def login_verify_2fa():
             token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
             if isinstance(token, bytes): token = token.decode('utf-8')
             resp = make_response(jsonify({'status': 'success', 'token': token, 'username': user.username, 'is_admin': user.is_admin}))
-            resp.set_cookie('token', token, httponly=True, secure=True, samesite='Lax')
+            resp.set_cookie('token', token, httponly=True, secure=False, samesite='Lax')
             return resp
         else: return jsonify({'message': 'Invalid Code'}), 400
     except: return jsonify({'message': 'Session expired'}), 401
@@ -466,9 +467,9 @@ def google_callback():
     token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
     if isinstance(token, bytes): token = token.decode('utf-8')
     resp = make_response(redirect('/'))
-    resp.set_cookie('token', token, httponly=True, secure=True, samesite='Lax')
-    resp.set_cookie('social_login_user', user.username, max_age=10, secure=True, samesite='Lax')
-    resp.set_cookie('social_login_admin', str(user.is_admin).lower(), max_age=10, secure=True, samesite='Lax')
+    resp.set_cookie('token', token, httponly=True, secure=False, samesite='Lax')
+    resp.set_cookie('social_login_user', user.username, max_age=10, secure=False, samesite='Lax')
+    resp.set_cookie('social_login_admin', str(user.is_admin).lower(), max_age=10, secure=False, samesite='Lax')
     return resp
 
 @app.route('/login/github')
@@ -506,9 +507,9 @@ def github_callback():
     jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
     if isinstance(jwt_token, bytes): jwt_token = jwt_token.decode('utf-8')
     response = make_response(redirect('/'))
-    response.set_cookie('token', jwt_token, httponly=True, secure=True, samesite='Lax')
-    response.set_cookie('social_login_user', user.username, max_age=10, secure=True, samesite='Lax')
-    response.set_cookie('social_login_admin', str(user.is_admin).lower(), max_age=10, secure=True, samesite='Lax')
+    response.set_cookie('token', jwt_token, httponly=True, secure=False, samesite='Lax')
+    response.set_cookie('social_login_user', user.username, max_age=10, secure=False, samesite='Lax')
+    response.set_cookie('social_login_admin', str(user.is_admin).lower(), max_age=10, secure=False, samesite='Lax')
     return response
 
 @app.route('/login/linkedin')
@@ -550,9 +551,9 @@ def linkedin_callback():
     jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
     if isinstance(jwt_token, bytes): jwt_token = jwt_token.decode('utf-8')
     response = make_response(redirect('/'))
-    response.set_cookie('token', jwt_token, httponly=True, secure=True, samesite='Lax')
-    response.set_cookie('social_login_user', user.username, max_age=10, secure=True, samesite='Lax')
-    response.set_cookie('social_login_admin', str(user.is_admin).lower(), max_age=10, secure=True, samesite='Lax')
+    response.set_cookie('token', jwt_token, httponly=True, secure=False, samesite='Lax')
+    response.set_cookie('social_login_user', user.username, max_age=10, secure=False, samesite='Lax')
+    response.set_cookie('social_login_admin', str(user.is_admin).lower(), max_age=10, secure=False, samesite='Lax')
     return response
 
 @app.route('/logout')
@@ -738,7 +739,7 @@ def contact_support():
     email = data.get('email')
     message = data.get('message')
     
-    if not name or not email or not message:
+    if not name or not email or not message or not app.config['MAIL_USERNAME']:
         return jsonify({'message': 'All fields are required'}), 400
         
     try:
