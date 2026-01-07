@@ -67,6 +67,7 @@ const editVaultSiteName = document.getElementById('editVaultSiteName');
 const editVaultSiteURL = document.getElementById('editVaultSiteURL');
 const editVaultUsername = document.getElementById('editVaultUsername');
 const editVaultPassword = document.getElementById('editVaultPassword');
+const toggleEditVaultPassword = document.getElementById('toggleEditVaultPassword');
 const updateVaultBtn = document.getElementById('updateVaultBtn');
 const editVaultMessage = document.getElementById('editVaultMessage');
 
@@ -76,6 +77,7 @@ const forgotEmail = document.getElementById('forgotEmail');
 const forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
 const forgotMessage = document.getElementById('forgotMessage');
 const newResetPassword = document.getElementById('newResetPassword');
+const toggleResetPassword = document.getElementById('toggleResetPassword');
 const resetSubmitBtn = document.getElementById('resetSubmitBtn');
 const resetMessage = document.getElementById('resetMessage');
 
@@ -141,6 +143,24 @@ if (toggleAuthPassword) {
         authPassword.setAttribute('type', type);
         toggleAuthPassword.classList.toggle('fa-eye');
         toggleAuthPassword.classList.toggle('fa-eye-slash');
+    });
+}
+
+if (toggleEditVaultPassword) {
+    toggleEditVaultPassword.addEventListener('click', () => {
+        const type = editVaultPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        editVaultPassword.setAttribute('type', type);
+        toggleEditVaultPassword.classList.toggle('fa-eye');
+        toggleEditVaultPassword.classList.toggle('fa-eye-slash');
+    });
+}
+
+if (toggleResetPassword) {
+    toggleResetPassword.addEventListener('click', () => {
+        const type = newResetPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        newResetPassword.setAttribute('type', type);
+        toggleResetPassword.classList.toggle('fa-eye');
+        toggleResetPassword.classList.toggle('fa-eye-slash');
     });
 }
 
@@ -651,7 +671,7 @@ window.onclick = (e) => {
     }
 
     // Shake effect for persistent modals (Auth, Dashboard, Legal, Contact)
-    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal || e.target === login2FAModal || e.target === setup2FAModal || e.target === editVaultModal) {
+    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal || e.target === login2FAModal || e.target === setup2FAModal || e.target === editVaultModal || e.target === resetModal) {
         const content = e.target.querySelector('.modal-content, .dashboard-container');
         if (content) {
             content.classList.remove('shake-anim');
@@ -712,6 +732,12 @@ authPassword.addEventListener('input', (e) => {
         validateChecklist(e.target.value, 'auth-checklist');
     }
 });
+
+if (newResetPassword) {
+    newResetPassword.addEventListener('input', (e) => {
+        validateChecklist(e.target.value, 'reset-checklist');
+    });
+}
 
 authSubmitBtn.addEventListener('click', async () => {
     const username = authUsername.value;
@@ -1182,6 +1208,9 @@ async function loadVault() {
                     }
                 } catch (e) { /* invalid URL */ }
 
+                let fullUrl = item.site_url;
+                if (fullUrl && !/^https?:\/\//i.test(fullUrl)) fullUrl = 'https://' + fullUrl;
+
                 const faviconHTML = domain 
                     ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" class="site-favicon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                        <span class="site-favicon-default" style="display:none;"><i class="fas fa-globe-americas"></i></span>`
@@ -1193,7 +1222,7 @@ async function loadVault() {
                             ${faviconHTML}
                             <div class="vault-card-title">
                                 <h4>${item.site_name}</h4>
-                                <a href="${item.site_url}" target="_blank" rel="noopener noreferrer" class="site-url">${domain || item.site_url || 'No URL provided'}</a>
+                                <a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="site-url">${domain || item.site_url || 'No URL provided'}</a>
                             </div>
                         </div>
                         
@@ -1250,6 +1279,12 @@ async function openEditVaultModal(id) {
     editVaultSiteURL.value = '';
     editVaultUsername.value = '';
     editVaultPassword.value = '';
+    
+    editVaultPassword.setAttribute('type', 'password');
+    if(toggleEditVaultPassword) {
+        toggleEditVaultPassword.classList.add('fa-eye');
+        toggleEditVaultPassword.classList.remove('fa-eye-slash');
+    }
 
     try {
         const res = await fetch(`/vault/item/${id}`);

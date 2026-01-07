@@ -622,6 +622,13 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
 .section-header h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 .vault-header-actions { display: flex; gap: 10px; }
+
+@media (max-width: 768px) {
+    .section-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+    .vault-header-actions { width: 100%; display: flex; gap: 10px; }
+    .vault-header-actions button { flex: 1; justify-content: center; }
+}
+
 .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
 .vault-card {

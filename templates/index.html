@@ -255,7 +255,7 @@
                 <h4>Developers</h4>
                 <ul class="footer-links">
                     <li><a href="https://github.com/Pranavr06/Vaultary" target="_blank" rel="noopener noreferrer">Source Code</a></li>
-                    <li><a href="https://github.com/Pranavr06/Vaultary/issues" target="_blank" rel="noopener noreferrer">Report Bug</a></li>
+                    <li><a href="https://github.com/Pranavr06/Vaultary/blob/main/.github/ISSUE_TEMPLATE/bug_report.md" target="_blank" rel="noopener noreferrer">Report Bug</a></li>
                     <li><a href="https://pranavr.netlify.app/projects/vaultary" target="_blank" rel="noopener noreferrer">Working</a></li>
                 </ul>
             </div>
@@ -363,12 +363,22 @@
 
     <div id="resetModal" class="modal hidden">
         <div class="modal-content">
+            <span class="close-modal close-reset" data-tooltip="Close">&times;</span>
             <div class="modal-header">
                 <h2>New Password</h2>
                 <p class="subtitle">Enter your new secure password.</p>
             </div>
             <div class="modal-body">
-                <input type="password" id="newResetPassword" placeholder="New Password" autocomplete="off">
+                <div class="input-group-auth">
+                    <input type="password" id="newResetPassword" placeholder="New Password" autocomplete="off">
+                    <i class="fas fa-eye password-toggle-icon" id="toggleResetPassword" role="button" tabindex="0"></i>
+                </div>
+                <ul id="reset-checklist" class="password-checklist hidden">
+                    <li data-req="upper"><i class="far fa-circle"></i> Uppercase</li>
+                    <li data-req="number"><i class="far fa-circle"></i> Number</li>
+                    <li data-req="special"><i class="far fa-circle"></i> Special Char</li>
+                    <li data-req="length"><i class="far fa-circle"></i> 8+ Chars</li>
+                </ul>
                 <button id="resetSubmitBtn" class="primary-btn" type="button">Update Password</button>
                 <p id="resetMessage" class="error-msg"></p>
             </div>
@@ -613,7 +623,10 @@
                 <input type="text" id="editVaultSiteName" placeholder="Site Name (e.g. Netflix)" autocomplete="off">
                 <input type="text" id="editVaultSiteURL" placeholder="URL (Optional)" autocomplete="off">
                 <input type="text" id="editVaultUsername" placeholder="Username/Email" autocomplete="off">
-                <input type="password" id="editVaultPassword" placeholder="Password" autocomplete="off">
+                <div class="input-group-auth">
+                    <input type="password" id="editVaultPassword" placeholder="Password" autocomplete="off">
+                    <i class="fas fa-eye password-toggle-icon" id="toggleEditVaultPassword" role="button" tabindex="0"></i>
+                </div>
                 <button id="updateVaultBtn" class="primary-btn">Update</button>
                 <p id="editVaultMessage" class="error-msg"></p>
             </div>
