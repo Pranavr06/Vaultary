@@ -24,8 +24,8 @@
     <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png') }}">
 
     <link rel="canonical" href="https://vaultary.vercel.app/">
-    <link rel="icon" href="{{ url_for('static', filename='passguard-favicon.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='passguard-favicon.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='vaultary-favicon.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='vaultary-favicon.png') }}">
 
     <title>Vaultary | Identity & Security Platform</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -601,6 +601,24 @@
                 <input type="password" id="vaultPassword" placeholder="Password" autocomplete="off">
                 <button id="saveVaultBtn" class="primary-btn">Save to Vault</button>
                 <p id="vaultMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="editVaultModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-edit-vault" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Edit Password</h2>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editVaultId">
+                <input type="text" id="editVaultSiteName" placeholder="Site Name (e.g. Netflix)" autocomplete="off">
+                <input type="text" id="editVaultSiteURL" placeholder="URL (Optional)" autocomplete="off">
+                <input type="text" id="editVaultUsername" placeholder="Username/Email" autocomplete="off">
+                <input type="password" id="editVaultPassword" placeholder="Password" autocomplete="off">
+                <button id="updateVaultBtn" class="primary-btn">Update</button>
+                <p id="editVaultMessage" class="error-msg"></p>
             </div>
         </div>
     </div>

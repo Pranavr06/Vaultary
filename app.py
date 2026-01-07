@@ -664,6 +664,38 @@ def export_vault(current_user):
     output.headers["Content-type"] = "text/csv"
     return output
 
+@app.route('/vault/item/<int:item_id>', methods=['GET', 'PUT'])
+@token_required
+def manage_single_vault_item(current_user, item_id):
+    item = Vault.query.get(item_id)
+    if not item or item.user_id != current_user.id:
+        return jsonify({'message': 'Access Denied'}), 403
+
+    if request.method == 'GET':
+        try:
+            password = item.get_password()
+            return jsonify({
+                'site_name': item.site_name,
+                'site_url': item.site_url,
+                'site_username': item.site_username,
+                'password': password
+            })
+        except:
+            return jsonify({'message': 'Decryption Error'}), 500
+    
+    if request.method == 'PUT':
+        data = request.get_json()
+        if not data.get('site_name') or not data.get('site_username') or not data.get('password'):
+            return jsonify({'message': 'Required fields are missing'}), 400
+
+        item.site_name = data['site_name']
+        item.site_url = data.get('site_url', '')
+        item.site_username = data['site_username']
+        item.set_password(data['password'])
+        
+        db.session.commit()
+        return jsonify({'message': 'Item updated!'})
+
 @app.route('/vault/decrypt/<int:item_id>', methods=['POST'])
 @token_required
 def decrypt_vault_item(current_user, item_id):

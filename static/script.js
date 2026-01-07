@@ -33,12 +33,13 @@ const login2FAModal = document.getElementById('login2FAModal');
 const setup2FAModal = document.getElementById('setup2FAModal');
 // Vault Modal
 const addVaultModal = document.getElementById('addVaultModal');
+const editVaultModal = document.getElementById('editVaultModal');
 const sessionTimeoutModal = document.getElementById('sessionTimeoutModal');
 const legalModal = document.getElementById('legalModal');
 const contactModal = document.getElementById('contactModal');
 const passwordHealthLink = document.getElementById('passwordHealthLink');
 
-const allModals = [authModal, dashboardModal, forgotModal, resetModal, login2FAModal, setup2FAModal, addVaultModal, sessionTimeoutModal, legalModal, contactModal];
+const allModals = [authModal, dashboardModal, forgotModal, resetModal, login2FAModal, setup2FAModal, addVaultModal, editVaultModal, sessionTimeoutModal, legalModal, contactModal];
 
 // Auth Inputs
 const authUsername = document.getElementById('authUsername');
@@ -60,6 +61,15 @@ const openAddVaultModalBtn = document.getElementById('openAddVaultModal');
 const exportVaultBtn = document.getElementById('exportVaultBtn');
 const saveVaultBtn = document.getElementById('saveVaultBtn');
 const vaultGrid = document.getElementById('vaultGrid');
+
+// Edit Vault Modal Elements
+const editVaultId = document.getElementById('editVaultId');
+const editVaultSiteName = document.getElementById('editVaultSiteName');
+const editVaultSiteURL = document.getElementById('editVaultSiteURL');
+const editVaultUsername = document.getElementById('editVaultUsername');
+const editVaultPassword = document.getElementById('editVaultPassword');
+const updateVaultBtn = document.getElementById('updateVaultBtn');
+const editVaultMessage = document.getElementById('editVaultMessage');
 
 // Forgot & Reset Inputs
 const forgotLink = document.getElementById('forgotPasswordLink');
@@ -1071,6 +1081,12 @@ if(openAddVaultModalBtn) {
 document.querySelector('.close-add-vault').addEventListener('click', () => {
     addVaultModal.classList.add('hidden');
 });
+if (document.querySelector('.close-edit-vault')) {
+    document.querySelector('.close-edit-vault').addEventListener('click', () => {
+        editVaultModal.classList.add('hidden');
+    });
+}
+
 
 if(exportVaultBtn) {
     exportVaultBtn.addEventListener('click', async () => {
@@ -1136,6 +1152,42 @@ if(saveVaultBtn) {
     });
 }
 
+if(updateVaultBtn) {
+    updateVaultBtn.addEventListener('click', async () => {
+        const id = editVaultId.value;
+        const site_name = editVaultSiteName.value;
+        const site_url = editVaultSiteURL.value;
+        const site_username = editVaultUsername.value;
+        const password = editVaultPassword.value;
+
+        if(!site_name || !site_username || !password) {
+            editVaultMessage.innerText = "All fields except URL are required.";
+            return;
+        }
+
+        setLoading(updateVaultBtn, true);
+        try {
+            const res = await fetch(`/vault/item/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({site_name, site_url, site_username, password})
+            });
+            const data = await res.json();
+            if(res.ok) {
+                editVaultModal.classList.add('hidden');
+                loadVault();
+                showToast("Vault item updated!", "success");
+            } else {
+                editVaultMessage.innerText = data.message || "Error updating item.";
+            }
+        } catch(e) { 
+            console.error(e); 
+            editVaultMessage.innerText = "A connection error occurred.";
+        }
+        setLoading(updateVaultBtn, false);
+    });
+}
+
 async function loadVault() {
     vaultGrid.innerHTML = '<p class="text-muted">Loading...</p>';
     try {
@@ -1143,36 +1195,57 @@ async function loadVault() {
         if(res.ok) {
             const items = await res.json();
             if(items.length === 0) {
-                vaultGrid.innerHTML = '<p class="text-muted">No passwords saved yet.</p>';
+                vaultGrid.innerHTML = '<p class="text-muted">Your vault is empty. Click "Add New" to get started.</p>';
                 return;
             }
             vaultGrid.innerHTML = "";
             items.forEach(item => {
+                let domain = '';
+                try {
+                    if (item.site_url) {
+                        domain = new URL(item.site_url).hostname.replace('www.', '');
+                    }
+                } catch (e) { /* invalid URL */ }
+
+                const faviconHTML = domain 
+                    ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" class="site-favicon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <span class="site-favicon-default" style="display:none;"><i class="fas fa-globe-americas"></i></span>`
+                    : `<span class="site-favicon-default"><i class="fas fa-globe-americas"></i></span>`;
+
                 vaultGrid.innerHTML += `
                     <div class="vault-card">
-                        <h4>${item.site_name}</h4>
-                        <a href="${item.site_url}" target="_blank" rel="noopener noreferrer" class="site-url">${item.site_url || ''}</a>
-                        <div class="username-display">
-                            <i class="fas fa-user"></i> ${item.site_username}
+                        <div class="vault-card-header">
+                            ${faviconHTML}
+                            <div class="vault-card-title">
+                                <h4>${item.site_name}</h4>
+                                <a href="${item.site_url}" target="_blank" rel="noopener noreferrer" class="site-url">${domain || 'No URL provided'}</a>
+                            </div>
                         </div>
-                        <div class="password-display">
-                            <i class="fas fa-lock"></i>
-                            <span id="pass-display-${item.id}" class="masked-pass">••••••••</span>
-                            <i class="fas fa-eye toggle-vault-pass action-btn" data-action="toggle-pass" data-id="${item.id}" title="Show/Hide Password"></i>
+                        
+                        <div class="vault-field">
+                            <i class="fas fa-user-shield"></i>
+                            <span class="vault-field-value">${item.site_username}</span>
+                            <button class="action-btn" data-action="copy-user" data-username="${item.site_username}" title="Copy Username"><i class="far fa-copy"></i></button>
                         </div>
+
+                        <div class="vault-field">
+                            <i class="fas fa-key"></i>
+                            <span id="pass-display-${item.id}" class="vault-field-value masked-pass">••••••••</span>
+                            <button class="action-btn" data-action="toggle-pass" data-id="${item.id}" title="Show/Hide Password"><i class="far fa-eye"></i></button>
+                            <button class="action-btn" data-action="copy-pass" data-id="${item.id}" title="Copy Password"><i class="far fa-copy"></i></button>
+                        </div>
+
                         <div class="vault-actions">
-                            <button class="vault-btn action-btn" data-action="copy-user" data-username="${item.site_username}" data-tooltip="Copy Username"><i class="fas fa-copy"></i> User</button>
-                            <button class="vault-btn action-btn" data-action="copy-pass" data-id="${item.id}" data-tooltip="Copy Password"><i class="fas fa-key"></i> Copy Pass</button>
-                            <button class="vault-btn delete action-btn" data-action="delete" data-id="${item.id}" data-tooltip="Delete" aria-label="Delete Item"><i class="fas fa-trash"></i></button>
+                            <button class="vault-btn action-btn" data-action="edit" data-id="${item.id}"><i class="fas fa-pencil-alt"></i> Edit</button>
+                            <button class="vault-btn delete action-btn" data-action="delete" data-id="${item.id}"><i class="fas fa-trash-alt"></i> Delete</button>
                         </div>
                     </div>
                 `;
             });
         }
-    } catch(e) { vaultGrid.innerHTML = '<p class="error-msg">Error loading vault</p>'; }
+    } catch(e) { vaultGrid.innerHTML = '<p class="error-msg">Error loading vault. Please try again.</p>'; }
 }
 
-// Event Delegation for Vault Grid (Fixes CSP Inline Handler Issues)
 vaultGrid.addEventListener('click', (e) => {
     const target = e.target.closest('.action-btn');
     if (!target) return;
@@ -1181,22 +1254,52 @@ vaultGrid.addEventListener('click', (e) => {
     const id = target.dataset.id;
 
     if (action === 'toggle-pass') {
-        toggleVaultPassword(id, target);
+        toggleVaultPassword(id, target.querySelector('i'));
     } else if (action === 'copy-user') {
         copyUsername(target.dataset.username);
     } else if (action === 'copy-pass') {
         decryptPassword(id, target);
     } else if (action === 'delete') {
         deleteVaultItem(id);
+    } else if (action === 'edit') {
+        openEditVaultModal(id);
     }
 });
 
-window.copyUsername = (text) => {
+async function openEditVaultModal(id) {
+    editVaultMessage.innerText = '';
+    editVaultModal.classList.remove('hidden');
+    
+    // Show a temporary loading state in the form
+    editVaultSiteName.value = 'Loading...';
+    editVaultSiteURL.value = '';
+    editVaultUsername.value = '';
+    editVaultPassword.value = '';
+
+    try {
+        const res = await fetch(`/vault/item/${id}`);
+        if (res.ok) {
+            const data = await res.json();
+            editVaultId.value = id;
+            editVaultSiteName.value = data.site_name;
+            editVaultSiteURL.value = data.site_url;
+            editVaultUsername.value = data.site_username;
+            editVaultPassword.value = data.password;
+        } else {
+            const errData = await res.json();
+            editVaultMessage.innerText = errData.message || 'Failed to load item data.';
+        }
+    } catch (e) {
+        editVaultMessage.innerText = 'Connection error.';
+    }
+}
+
+function copyUsername(text) {
     navigator.clipboard.writeText(text);
     showToast("Username copied!", "info"); // TOAST
 }
 
-window.toggleVaultPassword = async (id, icon) => {
+async function toggleVaultPassword(id, icon) {
     const displaySpan = document.getElementById(`pass-display-${id}`);
     const isHidden = displaySpan.classList.contains('masked-pass');
     
@@ -1209,17 +1312,17 @@ window.toggleVaultPassword = async (id, icon) => {
                 const data = await res.json();
                 displaySpan.innerText = data.password;
                 displaySpan.classList.remove('masked-pass');
-                icon.className = 'fas fa-eye-slash toggle-vault-pass action-btn';
+                icon.className = 'far fa-eye-slash';
             } else { showToast("Error decrypting", "error"); icon.className = originalClass; }
         } catch(e) { icon.className = originalClass; }
     } else {
         displaySpan.innerText = '••••••••';
         displaySpan.classList.add('masked-pass');
-        icon.className = 'fas fa-eye toggle-vault-pass action-btn';
+        icon.className = 'far fa-eye';
     }
-};
+}
 
-window.decryptPassword = async (id, btn) => {
+async function decryptPassword(id, btn) {
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     try {
@@ -1238,15 +1341,15 @@ window.decryptPassword = async (id, btn) => {
         console.error(e); 
         btn.innerHTML = originalText;
     }
-};
+}
 
-window.deleteVaultItem = async (id) => {
+async function deleteVaultItem(id) {
     if(confirm("Delete this password permanently?")) {
         await fetch(`/vault/delete/${id}`, { method: 'DELETE' });
         loadVault();
         showToast("Item deleted", "info"); // TOAST
     }
-};
+}
 
 // --- ADMIN LOGIC ---
 async function loadAdminPanel() {

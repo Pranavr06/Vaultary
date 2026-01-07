@@ -623,20 +623,98 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 .section-header h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 .vault-header-actions { display: flex; gap: 10px; }
 .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-.vault-card { background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; transition: transform 0.2s, box-shadow 0.2s; }
-.vault-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); border-color: var(--accent); }
-.vault-card h4 { color: var(--text-main); margin-bottom: 5px; font-size: 1.1rem; }
-.vault-card .site-url { font-size: 0.8rem; color: var(--accent); text-decoration: none; margin-bottom: 15px; display: block; }
-.vault-card .username-display { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-.vault-card .password-display { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-.vault-card .password-display span { flex: 1; word-break: break-all; }
-.vault-card .masked-pass { font-family: monospace; letter-spacing: 3px; }
-.toggle-vault-pass { cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
-.toggle-vault-pass:hover { color: var(--accent); }
-.vault-actions { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
-.vault-btn { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
-.vault-btn:hover { background: var(--bg-color); color: var(--text-main); border-color: var(--accent); }
-.vault-btn.delete:hover { color: #ef4444; border-color: #ef4444; }
+
+.vault-card {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.vault-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    border-color: var(--accent);
+}
+.vault-card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.site-favicon, .site-favicon-default {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+.site-favicon-default {
+    background: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+}
+.vault-card-title h4 {
+    color: var(--text-main);
+    margin: 0;
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vault-card .site-url {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: block;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vault-card .site-url:hover { color: var(--accent); }
+.vault-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+.vault-field > i:first-child {
+    width: 20px;
+    text-align: center;
+    color: var(--accent);
+}
+.vault-field-value { flex: 1; word-break: break-all; font-family: monospace; }
+.masked-pass { font-family: 'Inter', sans-serif; letter-spacing: 3px; }
+.vault-field .action-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    border-radius: 4px;
+}
+.vault-field .action-btn:hover { color: var(--accent); background: var(--bg-color); }
+.vault-actions { display: flex; margin-top: auto; border-top: 1px solid var(--border); }
+.vault-btn {
+    flex: 1; background: transparent; border: none;
+    border-right: 1px solid var(--border); color: var(--text-muted);
+    padding: 12px; border-radius: 0; cursor: pointer;
+    font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.vault-btn:last-child { border-right: none; border-radius: 0 0 10px 10px; }
+.vault-btn:first-child { border-radius: 0 0 0 10px; }
+.vault-btn:hover { background: var(--bg-color); color: var(--text-main); }
+.vault-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
 
 /* --- TOAST NOTIFICATIONS (NEW) --- */
 #toast-box {
