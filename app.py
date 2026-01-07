@@ -298,7 +298,7 @@ def login():
             if isinstance(temp_token, bytes): temp_token = temp_token.decode('utf-8')
             return jsonify({'status': '2fa_required', 'temp_token': temp_token})
             
-        token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+        token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
         if isinstance(token, bytes): token = token.decode('utf-8')
         resp = make_response(jsonify({'status': 'success', 'message': 'Login successful', 'token': token, 'is_admin': user.is_admin}))
         resp.set_cookie('token', token, httponly=True, secure=False, samesite='Lax')
@@ -322,7 +322,7 @@ def login_verify_2fa():
         code = str(data.get('code', '')).replace(' ', '')
         
         if totp.verify(code, valid_window=2):
-            token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+            token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
             if isinstance(token, bytes): token = token.decode('utf-8')
             resp = make_response(jsonify({'status': 'success', 'token': token, 'username': user.username, 'is_admin': user.is_admin}))
             resp.set_cookie('token', token, httponly=True, secure=False, samesite='Lax')
@@ -465,7 +465,7 @@ def google_callback():
         )
         db.session.add(user)
         db.session.commit()
-    token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+    token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
     if isinstance(token, bytes): token = token.decode('utf-8')
     resp = make_response(redirect('/'))
     resp.set_cookie('token', token, httponly=True, secure=False, samesite='Lax')
@@ -505,7 +505,7 @@ def github_callback():
         db.session.add(user)
         db.session.commit()
     
-    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
     if isinstance(jwt_token, bytes): jwt_token = jwt_token.decode('utf-8')
     response = make_response(redirect('/'))
     response.set_cookie('token', jwt_token, httponly=True, secure=False, samesite='Lax')
@@ -549,7 +549,7 @@ def linkedin_callback():
         db.session.add(user)
         db.session.commit()
         
-    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, app.config['SECRET_KEY'], algorithm="HS256")
+    jwt_token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
     if isinstance(jwt_token, bytes): jwt_token = jwt_token.decode('utf-8')
     response = make_response(redirect('/'))
     response.set_cookie('token', jwt_token, httponly=True, secure=False, samesite='Lax')
