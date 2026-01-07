@@ -56,20 +56,16 @@
 
 ## ⚠️ Security Model & Limitations
 
-In the spirit of transparency and continuous improvement, here are the current architectural trade-offs:
+In the spirit of transparency, here are the current architectural trade-offs:
 
 1.  **Encryption Model:**
     * *Current State:* Server-Side Encryption. The application holds the `VAULT_KEY` in environment variables and performs decryption on the server.
     * *Trade-off:* If the server environment is compromised, the keys are accessible.
-    * *Future Goal:* Move to a true Zero-Knowledge architecture where decryption happens solely in the browser using a key derived from the user's master password.
+    * *Future Goal:* Move to a true Zero-Knowledge architecture where decryption happens solely in the browser.
 
 2.  **JWT Invalidation:**
     * *Current State:* Logout clears the client-side cookie.
     * *Trade-off:* Because JWTs are stateless, the token remains valid until expiry (1 hour) even after logout.
-    * *Future Goal:* Implement a Redis blocklist to strictly invalidate tokens upon logout.
-
-3.  **Rate Limiting:**
-    * Currently uses in-memory storage. On serverless platforms (like Vercel), limits may not persist across different function invocations.
 
 ---
 
@@ -103,11 +99,18 @@ In the spirit of transparency and continuous improvement, here are the current a
 ---
 
 ## 🗺️ Roadmap
-- [x] **Dark Web Monitoring** (HaveIBeenPwned) ✅
-- [ ] **Biometric Integration** (WebAuthn)
-- [ ] **Redis Integration** (For robust Rate Limiting & JWT blocklisting)
+
+I am actively working on features to take Vaultary from a password manager to a complete digital identity fortress:
+
+- [x] **Dark Web Monitoring** (HaveIBeenPwned Integration) ✅
+- [ ] **Biometric Integration**: Implementing WebAuthn standards for fingerprint/FaceID login.
+- [ ] **Secure Notes**: Extending the vault schema to store unstructured text data (API keys, recovery codes).
 
 ---
 
 ## 📄 License
 Distributed under the MIT License.
+
+---
+
+Made by [Pranav R](https://pranavr.netlify.app/)
