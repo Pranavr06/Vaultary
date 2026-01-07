@@ -54,7 +54,6 @@ const toggleAuthPassword = document.getElementById('toggleAuthPassword');
 const authSubmitBtn = document.getElementById('authSubmitBtn');
 const authMessage = document.getElementById('authMessage');
 const switchAuthMode = document.getElementById('switchAuthMode');
-const rememberMe = document.getElementById('rememberMe');
 
 // Vault Elements
 const openAddVaultModalBtn = document.getElementById('openAddVaultModal');
@@ -118,13 +117,6 @@ window.addEventListener('load', () => {
     // Prevent Auto-fill / Clear Inputs
     setTimeout(() => {
         document.querySelectorAll('input').forEach(input => input.value = '');
-        
-        // Check for saved username (Remember Me)
-        const savedUser = localStorage.getItem('saved_username');
-        if (savedUser) {
-            authUsername.value = savedUser;
-            if(rememberMe) rememberMe.checked = true;
-        }
     }, 100);
 });
 
@@ -488,11 +480,6 @@ let isLoginMode = true;
 loginBtn.addEventListener('click', () => { 
     authModal.classList.remove('hidden'); 
     document.body.style.overflow = 'hidden';
-    const savedUser = localStorage.getItem('saved_username');
-    if(savedUser) {
-        authUsername.value = savedUser;
-        if(rememberMe) rememberMe.checked = true;
-    }
 });
 dashboardBtn.addEventListener('click', () => openDashboard('profile-section'));
 
@@ -515,11 +502,6 @@ mobileLoginBtn.addEventListener('click', () => {
     icon.classList.remove('fa-times');
     icon.classList.add('fa-bars');
     document.body.style.overflow = 'hidden';
-    const savedUser = localStorage.getItem('saved_username');
-    if(savedUser) {
-        authUsername.value = savedUser;
-        if(rememberMe) rememberMe.checked = true;
-    }
 });
 mobileDashboardBtn.addEventListener('click', () => { openDashboard('profile-section'); mobileNav.classList.add('hidden'); });
 mobileDashboardBtn.addEventListener('click', () => { 
@@ -669,7 +651,7 @@ window.onclick = (e) => {
     }
 
     // Shake effect for persistent modals (Auth, Dashboard, Legal, Contact)
-    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal || e.target === login2FAModal || e.target === setup2FAModal) {
+    if (e.target === dashboardModal || e.target === authModal || e.target === legalModal || e.target === contactModal || e.target === addVaultModal || e.target === login2FAModal || e.target === setup2FAModal || e.target === editVaultModal) {
         const content = e.target.querySelector('.modal-content, .dashboard-container');
         if (content) {
             content.classList.remove('shake-anim');
@@ -781,13 +763,6 @@ authSubmitBtn.addEventListener('click', async () => {
                     authModal.classList.add('hidden');
                     document.body.style.overflow = '';
                     authUsername.value = ""; authPassword.value = "";
-                    
-                    // Handle Remember Me
-                    if (rememberMe && rememberMe.checked) {
-                        localStorage.setItem('saved_username', username);
-                    } else {
-                        localStorage.removeItem('saved_username');
-                    }
                     
                     showToast("Login Successful!", "success"); // TOAST
                 }
@@ -1218,7 +1193,7 @@ async function loadVault() {
                             ${faviconHTML}
                             <div class="vault-card-title">
                                 <h4>${item.site_name}</h4>
-                                <a href="${item.site_url}" target="_blank" rel="noopener noreferrer" class="site-url">${domain || 'No URL provided'}</a>
+                                <a href="${item.site_url}" target="_blank" rel="noopener noreferrer" class="site-url">${domain || item.site_url || 'No URL provided'}</a>
                             </div>
                         </div>
                         
