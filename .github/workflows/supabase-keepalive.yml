@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping App (via Vercel)
         run: |
-          URL="https://vaultary.vercel.app"
+          URL="https://vaultary.vercel.app/api/health"
           
           echo "Pinging: $URL"
           
