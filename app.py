@@ -782,6 +782,10 @@ def generate_password():
         if (any(c.islower() for c in password) and any(c.isupper() for c in password) and any(c.isdigit() for c in password) and any(c in "!@#$%^&*" for c in password)): break
     return jsonify({'password': password})
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
 @app.route('/robots.txt')
 def robots(): return send_from_directory('static', 'robots.txt')
 

@@ -2,7 +2,7 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    - cron: '0 0 */2 * *'   # every 2 days (UTC)
+    - cron: '0 0 */2 * *'
   workflow_dispatch:
 
 jobs:
@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ping Supabase Project
+      - name: Ping App (via Vercel)
         run: |
-          URL="https://zeopglkthkvlvvtyeary.supabase.co/auth/v1/settings"
+          URL="https://vaultary.vercel.app/health"
           
           echo "Pinging: $URL"
           
