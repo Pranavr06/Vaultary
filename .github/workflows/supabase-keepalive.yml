@@ -1,0 +1,26 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    - cron: '0 0 */2 * *'   # every 2 days (UTC)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase Project
+        run: |
+          URL="https://zeopglkthkvlvvtyeary.supabase.co/auth/v1/settings"
+          
+          echo "Pinging: $URL"
+          
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          
+          echo "Response status: $STATUS"
+          
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Ping failed!"
+            exit 1
+          fi
