@@ -33,7 +33,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # --- FIX HTTPS & IP HEADERS ON VERCEL/RENDER ---
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 CORS(app)
 
@@ -782,8 +782,7 @@ def generate_password():
         if (any(c.islower() for c in password) and any(c.isupper() for c in password) and any(c.isdigit() for c in password) and any(c in "!@#$%^&*" for c in password)): break
     return jsonify({'password': password})
 
-@app.route('/api/health', methods=['GET'], strict_slashes=False)
-@app.route('/health', methods=['GET'], strict_slashes=False)
+@app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
 
