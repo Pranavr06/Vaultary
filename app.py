@@ -784,7 +784,12 @@ def generate_password():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "ok"}), 200
+    try:
+        # Ping database to prevent Supabase from pausing
+        User.query.first()
+        return jsonify({"status": "ok", "db": "connected"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/robots.txt')
 def robots(): return send_from_directory('static', 'robots.txt')
