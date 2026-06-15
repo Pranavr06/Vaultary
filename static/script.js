@@ -1212,8 +1212,7 @@ async function loadVault() {
                 } catch (e) { /* invalid URL */ }
 
                 const faviconHTML = domain 
-                    ? `<img src="https://icons.duckduckgo.com/ip3/${domain}.ico" alt="" class="site-favicon" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                       <span class="site-favicon-default" style="display:none;"><i class="fas fa-globe-americas"></i></span>`
+                    ? `<img src="https://icons.duckduckgo.com/ip3/${domain}.ico" alt="" class="site-favicon">`
                     : `<span class="site-favicon-default"><i class="fas fa-globe-americas"></i></span>`;
 
                 vaultGrid.innerHTML += `
