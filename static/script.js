@@ -1201,18 +1201,18 @@ async function loadVault() {
             }
             vaultGrid.innerHTML = "";
             items.forEach(item => {
+                let fullUrl = item.site_url || '';
+                if (fullUrl && !/^https?:\/\//i.test(fullUrl)) fullUrl = 'https://' + fullUrl;
+
                 let domain = '';
                 try {
-                    if (item.site_url) {
-                        domain = new URL(item.site_url).hostname.replace('www.', '');
+                    if (fullUrl) {
+                        domain = new URL(fullUrl).hostname.replace(/^www\./i, '');
                     }
                 } catch (e) { /* invalid URL */ }
 
-                let fullUrl = item.site_url;
-                if (fullUrl && !/^https?:\/\//i.test(fullUrl)) fullUrl = 'https://' + fullUrl;
-
                 const faviconHTML = domain 
-                    ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" class="site-favicon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    ? `<img src="https://icons.duckduckgo.com/ip3/${domain}.ico" alt="" class="site-favicon" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                        <span class="site-favicon-default" style="display:none;"><i class="fas fa-globe-americas"></i></span>`
                     : `<span class="site-favicon-default"><i class="fas fa-globe-americas"></i></span>`;
 
