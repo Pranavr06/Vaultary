@@ -459,7 +459,7 @@ ul { padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; }
 .close-dashboard:hover { color: var(--accent); }
 
 /* Dashboard Forms */
-.form-grid { display: grid; gap: 20px; max-width: 500px; }
+.form-grid { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; max-width: 100%; }
 .input-group-dash label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; }
 .input-group-dash input { width: 100%; margin-bottom: 0; }
 .char-count { float: right; font-size: 0.8rem; font-weight: normal; }
@@ -486,6 +486,7 @@ ul { padding-left: 20px; color: var(--text-muted); font-size: 0.95rem; }
     .dash-actions { flex-direction: column; align-items: stretch; }
     .mobile-action-btn { display: block; text-align: center; }
     #deleteAccountBtn { margin-top: 10px; }
+    .form-grid { grid-template-columns: 1fr; }
 }
 
 /* Auth Form */
