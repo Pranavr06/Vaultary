@@ -516,6 +516,7 @@
                 <nav class="dash-nav">
                     <button class="dash-tab active" data-target="profile-section"><i class="fas fa-user-cog"></i> Profile</button>
                     <button class="dash-tab" data-target="vault-section"><i class="fas fa-key"></i> Vault</button>
+                    <button class="dash-tab" data-target="notes-section"><i class="fas fa-sticky-note"></i> Notes</button>
                     <button class="dash-tab hidden" id="dashAdminTab" data-target="admin-section"><i class="fas fa-shield-alt"></i> Admin</button>
                 </nav>
 
@@ -580,6 +581,19 @@
                     </div>
                 </div>
 
+                <div id="notes-section" class="dash-view hidden">
+                    <div class="section-header">
+                        <h2>Secure Notes</h2>
+                        <div class="vault-header-actions">
+                            <button id="openAddNoteModal" class="primary-btn sm-btn"><i class="fas fa-plus"></i> Add Note</button>
+                        </div>
+                    </div>
+
+                    <div class="vault-grid" id="notesGrid">
+                        <p class="text-muted">Loading notes...</p>
+                    </div>
+                </div>
+
                 <div id="admin-section" class="dash-view hidden">
                     <h2>User Management</h2>
                     <div class="table-container">
@@ -595,6 +609,7 @@
         </div>
     </div>
 
+    <!-- VAULT MODALS -->
     <div id="addVaultModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal close-add-vault" data-tooltip="Close">&times;</span>
@@ -629,6 +644,38 @@
                 </div>
                 <button id="updateVaultBtn" class="primary-btn">Update</button>
                 <p id="editVaultMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTES MODALS -->
+    <div id="addNoteModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-add-note" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Add Secure Note</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="noteTitle" placeholder="Note Title (e.g. Secret PINs)" autocomplete="off">
+                <textarea id="noteContent" class="note-textarea" placeholder="Write your secure note here..." rows="6"></textarea>
+                <button id="saveNoteBtn" class="primary-btn">Save Note</button>
+                <p id="noteMessage" class="error-msg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="editNoteModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal close-edit-note" data-tooltip="Close">&times;</span>
+            <div class="modal-header">
+                <h2>Edit Secure Note</h2>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editNoteId">
+                <input type="text" id="editNoteTitle" placeholder="Note Title" autocomplete="off">
+                <textarea id="editNoteContent" class="note-textarea" placeholder="Write your secure note here..." rows="6"></textarea>
+                <button id="updateNoteBtn" class="primary-btn">Update Note</button>
+                <p id="editNoteMessage" class="error-msg"></p>
             </div>
         </div>
     </div>

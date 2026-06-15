@@ -775,3 +775,20 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 @keyframes slideIn { to { transform: translateX(0); } }
 @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
 @keyframes timeOut { from { width: 100%; } to { width: 0%; } }
+
+.note-textarea {
+width: 100%; 
+padding: 12px; 
+border-radius: 8px; 
+margin-bottom: 16px; 
+background: var(--bg-primary); 
+color: var(--text-primary); 
+border: 1px solid var(--border-color);
+resize: vertical;
+font-family: 'Inter', sans-serif;
+}
+
+.note-textarea:focus {
+outline: none;
+border-color: var(--primary-color);
+}

@@ -141,6 +141,7 @@ class User(db.Model):
     # Relationships
     history = db.relationship('History', backref='owner', lazy=True, cascade="all, delete-orphan")
     vault_items = db.relationship('Vault', backref='owner', lazy=True, cascade="all, delete-orphan")
+    secure_notes = db.relationship('SecureNote', backref='owner', lazy=True, cascade="all, delete-orphan")
 
 class Vault(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -170,6 +171,31 @@ class History(db.Model):
     password_score = db.Column(db.Integer, nullable=False)
     checked_on = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class SecureNote(db.Model):
+    __tablename__ = 'secure_notes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    title = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    def set_title(self, plaintext):
+        f = Fernet(Vault.get_encryption_key())
+        self.title = f.encrypt(plaintext.encode('utf-8')).decode('utf-8')
+
+    def get_title(self):
+        f = Fernet(Vault.get_encryption_key())
+        return f.decrypt(self.title.encode('utf-8')).decode('utf-8')
+
+    def set_content(self, plaintext):
+        f = Fernet(Vault.get_encryption_key())
+        self.content = f.encrypt(plaintext.encode('utf-8')).decode('utf-8')
+
+    def get_content(self):
+        f = Fernet(Vault.get_encryption_key())
+        return f.decrypt(self.content.encode('utf-8')).decode('utf-8')
 
 def token_required(f):
     @wraps(f)
@@ -719,6 +745,83 @@ def delete_vault_item(current_user, item_id):
     db.session.delete(item)
     db.session.commit()
     return jsonify({'message': 'Item deleted'})
+
+# --- SECURE NOTES ROUTES ---
+@app.route('/notes', methods=['GET'])
+@token_required
+def get_notes(current_user):
+    items = SecureNote.query.filter_by(user_id=current_user.id).all()
+    output = []
+    for item in items:
+        output.append({
+            'id': item.id,
+            'title': item.title,
+            'content': item.content,
+            'created_at': item.created_at,
+            'updated_at': item.updated_at
+        })
+    return jsonify(output)
+
+@app.route('/notes', methods=['POST'])
+@token_required
+def add_note(current_user):
+    data = request.get_json()
+    if not data.get('title') or not data.get('content'):
+        return jsonify({'message': 'Required fields are missing'}), 400
+
+    new_note = SecureNote(user_id=current_user.id)
+    new_note.set_title(data['title'])
+    new_note.set_content(data['content'])
+    
+    db.session.add(new_note)
+    db.session.commit()
+    return jsonify({'message': 'Note saved!'}), 201
+
+@app.route('/notes/<int:note_id>', methods=['PUT'])
+@token_required
+def update_note(current_user, note_id):
+    data = request.get_json()
+    note = SecureNote.query.get(note_id)
+    if not note or note.user_id != current_user.id:
+        return jsonify({'message': 'Access Denied'}), 403
+
+    if not data.get('title') or not data.get('content'):
+        return jsonify({'message': 'Required fields are missing'}), 400
+
+    note.set_title(data['title'])
+    note.set_content(data['content'])
+    
+    db.session.commit()
+    return jsonify({'message': 'Note updated!'})
+
+@app.route('/notes/<int:note_id>', methods=['DELETE'])
+@token_required
+def delete_note(current_user, note_id):
+    note = SecureNote.query.get(note_id)
+    if not note or note.user_id != current_user.id:
+        return jsonify({'message': 'Access Denied'}), 403
+
+    db.session.delete(note)
+    db.session.commit()
+    return jsonify({'message': 'Note deleted'})
+
+@app.route('/notes/decrypt/<int:note_id>', methods=['POST'])
+@token_required
+def decrypt_note(current_user, note_id):
+    note = SecureNote.query.get(note_id)
+    if not note or note.user_id != current_user.id:
+        return jsonify({'message': 'Access Denied'}), 403
+    
+    try:
+        decrypted_title = note.get_title()
+        decrypted_content = note.get_content()
+        return jsonify({
+            'status': 'success',
+            'decrypted_title': decrypted_title,
+            'decrypted_content': decrypted_content
+        })
+    except:
+        return jsonify({'message': 'Decryption Error'}), 500
 
 @app.route('/admin/users', methods=['GET'])
 @token_required

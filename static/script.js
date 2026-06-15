@@ -1612,3 +1612,172 @@ if (twoFactorIntegrationLink) {
         openDashboard('profile-section');
     });
 }
+
+// ==========================================
+// SECURE NOTES JAVASCRIPT LOGIC
+// ==========================================
+
+// DOM Elements
+const notesGrid = document.getElementById('notesGrid');
+const addNoteModal = document.getElementById('addNoteModal');
+const editNoteModal = document.getElementById('editNoteModal');
+const openAddNoteModalBtn = document.getElementById('openAddNoteModal');
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+const updateNoteBtn = document.getElementById('updateNoteBtn');
+
+// Modals close logic
+document.querySelector('.close-add-note')?.addEventListener('click', () => addNoteModal.classList.add('hidden'));
+document.querySelector('.close-edit-note')?.addEventListener('click', () => editNoteModal.classList.add('hidden'));
+
+// Hook into the Dashboard Tabs to load notes when clicked
+document.querySelectorAll('.dash-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        if(tab.getAttribute('data-target') === 'notes-section') {
+            loadNotes();
+        }
+    });
+});
+
+if (openAddNoteModalBtn) {
+    openAddNoteModalBtn.addEventListener('click', () => {
+        addNoteModal.classList.remove('hidden');
+    });
+}
+
+if (saveNoteBtn) {
+    saveNoteBtn.addEventListener('click', async () => {
+        const title = document.getElementById('noteTitle').value;
+        const content = document.getElementById('noteContent').value;
+        
+        if (!title || !content) {
+            document.getElementById('noteMessage').innerText = "Please fill out both fields";
+            return;
+        }
+
+        const originalText = saveNoteBtn.innerText;
+        saveNoteBtn.innerText = "Saving...";
+        try {
+            const res = await fetch('/notes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, content })
+            });
+            
+            if (res.ok) {
+                addNoteModal.classList.add('hidden');
+                document.getElementById('noteTitle').value = "";
+                document.getElementById('noteContent').value = "";
+                loadNotes();
+                if(typeof showToast === 'function') showToast("Note Encrypted & Saved!", "success");
+            } else {
+                document.getElementById('noteMessage').innerText = "Error saving note";
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        saveNoteBtn.innerText = originalText;
+    });
+}
+
+async function loadNotes() {
+    if(!notesGrid) return;
+    notesGrid.innerHTML = '<p class="text-muted">Loading secure notes...</p>';
+    try {
+        const res = await fetch('/notes');
+        if (res.ok) {
+            const items = await res.json();
+            if (items.length === 0) {
+                notesGrid.innerHTML = '<p class="text-muted">Your secure notes vault is empty. Click "Add Note" to get started.</p>';
+                return;
+            }
+            notesGrid.innerHTML = "";
+            items.forEach(note => {
+                notesGrid.innerHTML += `
+                    <div class="vault-card" style="display: flex; flex-direction: column;">
+                        <div class="vault-card-header" style="margin-bottom: 10px;">
+                            <span class="site-favicon-default" style="background: var(--primary-color); color: #fff;"><i class="fas fa-sticky-note"></i></span>
+                            <div class="vault-card-title">
+                                <h4>Encrypted Note</h4>
+                                <span class="site-url" style="font-size: 0.8rem; cursor: pointer;" onclick="decryptNote(${note.id})">Click decrypt to read</span>
+                            </div>
+                        </div>
+                        <div style="flex-grow: 1;"></div>
+                        <div class="vault-card-actions" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <button onclick="decryptNote(${note.id})" class="nav-btn outline sm-btn" style="flex: 1;"><i class="fas fa-unlock"></i> Decrypt</button>
+                            <button onclick="deleteNote(${note.id})" class="danger-btn-text sm-btn" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        notesGrid.innerHTML = '<p class="error-msg">Error loading notes</p>';
+    }
+}
+
+async function decryptNote(id) {
+    if(typeof showToast === 'function') showToast("Decrypting note...", "info");
+    try {
+        const res = await fetch(`/notes/decrypt/${id}`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            document.getElementById('editNoteId').value = id;
+            document.getElementById('editNoteTitle').value = data.decrypted_title;
+            document.getElementById('editNoteContent').value = data.decrypted_content;
+            editNoteModal.classList.remove('hidden');
+            if(typeof showToast === 'function') showToast("Decrypted successfully!", "success");
+        } else {
+            if(typeof showToast === 'function') showToast("Decryption Error", "error");
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+if (updateNoteBtn) {
+    updateNoteBtn.addEventListener('click', async () => {
+        const id = document.getElementById('editNoteId').value;
+        const title = document.getElementById('editNoteTitle').value;
+        const content = document.getElementById('editNoteContent').value;
+        
+        if (!title || !content) {
+            document.getElementById('editNoteMessage').innerText = "Fields cannot be empty";
+            return;
+        }
+
+        const originalText = updateNoteBtn.innerText;
+        updateNoteBtn.innerText = "Encrypting & Updating...";
+        try {
+            const res = await fetch(`/notes/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, content })
+            });
+            if (res.ok) {
+                editNoteModal.classList.add('hidden');
+                loadNotes();
+                if(typeof showToast === 'function') showToast("Note securely updated!", "success");
+            } else {
+                document.getElementById('editNoteMessage').innerText = "Error updating";
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        updateNoteBtn.innerText = originalText;
+    });
+}
+
+async function deleteNote(id) {
+    if (confirm("Are you sure you want to delete this secure note forever?")) {
+        try {
+            const res = await fetch(`/notes/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadNotes();
+                if(typeof showToast === 'function') showToast("Note deleted permanently", "info");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+}
