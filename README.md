@@ -46,30 +46,23 @@
     * **Authlib:** OAuth 2.0 integration.
 
 # 🛠️ Diagram
-                          ┌──────────────────────┐
-                          │      Browser         │
-                          │ (Desktop / Mobile)   │
-                          └──────────┬───────────┘
-                                     │
-                                     ▼
-                          ┌──────────────────────┐
-                          │  Vaultary Frontend   │
-                          │ HTML/CSS/JavaScript  │
-                          └──────────┬───────────┘
-                                     │
-                                     ▼
-                          ┌──────────────────────┐
-                          │      Flask API       │
-                          │ Authentication/API   │
-                          └──────┬─────┬─────┬───┘
-                                 │     │     │
-              ┌──────────────────┘     │     └──────────────────┐
-              ▼                        ▼                        ▼
-    ┌─────────────────┐     ┌─────────────────┐      ┌─────────────────┐
-    │ Supabase DB     │     │ HIBP API        │      │ OAuth Providers │
-    │ PostgreSQL      │     │ Breach Check    │      │ Google/GitHub   │
-    └─────────────────┘     └─────────────────┘      └─────────────────┘
 
+## 🏗️ System Architecture
+
+Browser (Desktop/Mobile)
+│
+└── Vaultary Frontend
+    │
+    └── Flask API
+        │
+        ├── Supabase PostgreSQL
+        │
+        ├── HaveIBeenPwned API
+        │
+        └── OAuth Providers
+            ├── Google
+            ├── GitHub
+            └── LinkedIn
 
 ### Security Implementation
 * **Encryption:** `cryptography` (Fernet) for symmetric AES-256 encryption of vault items.
