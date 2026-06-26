@@ -1,9 +1,10 @@
 # 🛡️ Vaultary - Identity Management & Secure Vault
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue?style=for-the-badge&logo=python)
-![Flask](https://img.shields.io/badge/Flask-2.0+-green?style=for-the-badge&logo=flask)
-![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)
-![Security](https://img.shields.io/badge/Security-AES--256-red?style=for-the-badge&logo=lock)
+![Flask](https://img.shields.io/badge/Flask-3.0+-black?style=for-the-badge&logo=flask)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Authentication](https://img.shields.io/badge/Auth-JWT-orange?style=for-the-badge)
+![Encryption](https://img.shields.io/badge/Encryption-AES--256-red?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
 
 **Vaultary** is a comprehensive identity security platform designed to audit password strength, monitor data breaches, and securely manage credentials. Unlike standard checkers, it uses mathematical entropy analysis and k-anonymity for privacy-preserving breach detection.
 
@@ -43,6 +44,20 @@
     * **JWT:** HTTP-only cookies for session management.
     * **Flask-Bcrypt:** Secure password hashing.
     * **Authlib:** OAuth 2.0 integration.
+
+Browser
+   │
+   ▼
+Vaultary Frontend
+   │
+   ▼
+Flask API
+   │
+   ├── PostgreSQL (Supabase)
+   │
+   ├── HIBP API
+   │
+   └── OAuth Providers
 
 ### Security Implementation
 * **Encryption:** `cryptography` (Fernet) for symmetric AES-256 encryption of vault items.
@@ -98,7 +113,7 @@ In the spirit of transparency, here are the current architectural trade-offs:
 
 ---
 
-## 🗺️ Roadmap
+## 🚀 Future Development
 
 I am actively working on features to take Vaultary from a password manager to a complete digital identity fortress:
 
@@ -112,5 +127,13 @@ I am actively working on features to take Vaultary from a password manager to a 
 Distributed under the MIT License.
 
 ---
+---
 
-Made by [Pranav R](https://pranavr.netlify.app/)
+## 👨‍💻 Author
+
+**Pranav R**
+
+- Portfolio: https://pranavr.netlify.app
+- GitHub: https://github.com/Pranavr06
+
+Built with a focus on privacy, security, and modern identity management.
