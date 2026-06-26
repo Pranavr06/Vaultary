@@ -45,19 +45,31 @@
     * **Flask-Bcrypt:** Secure password hashing.
     * **Authlib:** OAuth 2.0 integration.
 
-Browser
-   │
-   ▼
-Vaultary Frontend
-   │
-   ▼
-Flask API
-   │
-   ├── PostgreSQL (Supabase)
-   │
-   ├── HIBP API
-   │
-   └── OAuth Providers
+# 🛠️ Diagram
+                          ┌──────────────────────┐
+                          │      Browser         │
+                          │ (Desktop / Mobile)   │
+                          └──────────┬───────────┘
+                                     │
+                                     ▼
+                          ┌──────────────────────┐
+                          │  Vaultary Frontend   │
+                          │ HTML/CSS/JavaScript  │
+                          └──────────┬───────────┘
+                                     │
+                                     ▼
+                          ┌──────────────────────┐
+                          │      Flask API       │
+                          │ Authentication/API   │
+                          └──────┬─────┬─────┬───┘
+                                 │     │     │
+              ┌──────────────────┘     │     └──────────────────┐
+              ▼                        ▼                        ▼
+    ┌─────────────────┐     ┌─────────────────┐      ┌─────────────────┐
+    │ Supabase DB     │     │ HIBP API        │      │ OAuth Providers │
+    │ PostgreSQL      │     │ Breach Check    │      │ Google/GitHub   │
+    └─────────────────┘     └─────────────────┘      └─────────────────┘
+
 
 ### Security Implementation
 * **Encryption:** `cryptography` (Fernet) for symmetric AES-256 encryption of vault items.
