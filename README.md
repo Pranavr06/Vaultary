@@ -47,8 +47,7 @@
 
 # 🛠️ Diagram
 
-## 🏗️ System Architecture
-
+```text
 Browser (Desktop/Mobile)
 │
 └── Vaultary Frontend
@@ -63,6 +62,7 @@ Browser (Desktop/Mobile)
             ├── Google
             ├── GitHub
             └── LinkedIn
+```
 
 ### Security Implementation
 * **Encryption:** `cryptography` (Fernet) for symmetric AES-256 encryption of vault items.
