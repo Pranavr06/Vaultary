@@ -26,10 +26,7 @@ MarkupSafe
 ordered-set
 packaging
 Pillow
-psycopg
-psycopg-binary
-psycopg2-binary
-psycopg[binary]
+psycopg2-binary>=2.9.9
 pycparser
 PyJWT
 pyotp

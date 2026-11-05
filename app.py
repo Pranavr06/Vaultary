@@ -84,10 +84,10 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 # Handle Supabase/Postgres URL fix (ensure explicit postgresql+psycopg2 driver)
 uri = os.getenv('DATABASE_URL')
 if uri:
-    if uri.startswith("postgres://"):
-        uri = uri.replace("postgres://", "postgresql+psycopg2://", 1)
-    elif uri.startswith("postgresql://") and not uri.startswith("postgresql+"):
-        uri = uri.replace("postgresql://", "postgresql+psycopg2://", 1)
+    for prefix in ["postgres://", "postgresql://", "postgresql+psycopg://"]:
+        if uri.startswith(prefix):
+            uri = "postgresql+psycopg2://" + uri[len(prefix):]
+            break
 
 use_sqlite = os.getenv('USE_SQLITE', '').lower() in ['true', '1']
 
@@ -143,7 +143,15 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
+try:
+    db.init_app(app)
+except Exception as e:
+    print(f"[DATABASE INIT ERROR] Failed to initialize with primary URI: {e}", flush=True)
+    if 'sqlalchemy' in app.extensions:
+        del app.extensions['sqlalchemy']
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/fallback.db' if IS_SERVERLESS else 'sqlite:///site.db'
+    db.init_app(app)
 bcrypt = Bcrypt(app)
 oauth = OAuth(app)
 mail = Mail(app)
