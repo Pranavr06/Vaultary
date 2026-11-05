@@ -27,6 +27,7 @@ ordered-set
 packaging
 Pillow
 psycopg2-binary
+psycopg[binary]
 pycparser
 PyJWT
 pyotp

@@ -81,14 +81,17 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or 'vaultary-fallback-secret-
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Handle Supabase/Postgres URL fix (postgres:// -> postgresql://)
+# Handle Supabase/Postgres URL fix (ensure explicit postgresql+psycopg2 driver)
 uri = os.getenv('DATABASE_URL')
-if uri and uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://", 1)
+if uri:
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif uri.startswith("postgresql://") and not uri.startswith("postgresql+"):
+        uri = uri.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 use_sqlite = os.getenv('USE_SQLITE', '').lower() in ['true', '1']
 
-if uri and not use_sqlite and uri.startswith("postgresql://"):
+if uri and not use_sqlite and uri.startswith("postgresql"):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'poolclass': NullPool,
         'pool_pre_ping': True,
