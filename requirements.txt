@@ -20,6 +20,7 @@ gunicorn
 idna
 itsdangerous
 Jinja2
+joserfc
 limits
 MarkupSafe
 ordered-set

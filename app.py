@@ -41,7 +41,37 @@ application = app  # WSGI compatibility alias
 # --- FIX HTTPS & IP HEADERS ON VERCEL/RENDER ---
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
+# --- CAPTURE & LOG UNCAUGHT WSGI EXCEPTIONS IN SERVERLESS LOGS ---
+class ErrorLoggingMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        try:
+            return self.wsgi_app(environ, start_response)
+        except Exception as e:
+            import traceback
+            err = traceback.format_exc()
+            print(f"[CRITICAL WSGI EXCEPTION]\n{err}", flush=True)
+            body = f"Serverless Function Error:\n\n{err}".encode('utf-8')
+            start_response('500 Internal Server Error', [
+                ('Content-Type', 'text/plain; charset=utf-8'),
+                ('Content-Length', str(len(body)))
+            ])
+            return [body]
+
+app.wsgi_app = ErrorLoggingMiddleware(app.wsgi_app)
+
 CORS(app)
+
+# --- DETECT SERVERLESS ENVIRONMENT (Vercel / AWS Lambda) ---
+IS_SERVERLESS = bool(
+    os.getenv('VERCEL') or
+    os.getenv('VERCEL_ENV') or
+    os.getenv('AWS_LAMBDA_FUNCTION_NAME') or
+    os.getenv('LAMBDA_TASK_ROOT') or
+    os.path.exists('/var/task')
+)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or 'vaultary-fallback-secret-production-key-32b'
 
@@ -66,7 +96,7 @@ if uri and not use_sqlite and uri.startswith("postgresql://"):
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
 else:
     # Serverless lambdas (e.g. Vercel) have a strictly read-only filesystem except /tmp
-    if os.getenv('VERCEL'):
+    if IS_SERVERLESS:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/site.db'
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
@@ -1650,21 +1680,21 @@ def upgrade_database_schema():
         print(f"Schema upgrade note: {e}")
 
 # --- DATABASE TABLE CREATION & MIGRATION ---
-# Serverless environments (Vercel) must not execute heavy DDL migrations during cold-start invocation
-if not os.getenv('VERCEL'):
+# Serverless environments (Vercel) must never execute heavy DDL migrations during cold-start invocation
+if not IS_SERVERLESS:
     with app.app_context():
         try:
             upgrade_database_schema()
         except Exception as e:
-            print(f"DB Migration skipped: {e}")
+            print(f"DB Migration skipped: {e}", flush=True)
 else:
-    # On Vercel, if running on ephemeral SQLite without DATABASE_URL, create tables in /tmp
+    # On serverless (Vercel), if running on ephemeral SQLite without DATABASE_URL, create tables in /tmp
     if not uri:
         with app.app_context():
             try:
                 db.create_all()
             except Exception as e:
-                print(f"Vercel DB init note: {e}")
+                print(f"Serverless DB init note: {e}", flush=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
