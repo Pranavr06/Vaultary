@@ -1,688 +1,1194 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaultary | Premium Cybersecurity Platform</title>
+    <meta name="description" content="Vaultary - Advanced Identity & Security Platform. Secure your digital life with military-grade encryption.">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/png">
     
-    <meta name="description" content="Vaultary - Advanced Identity & Security Platform. Test password strength, manage vaults, and secure your digital life.">
-    <meta name="keywords" content="password strength checker, password manager, secure vault, 2fa, identity protection, cybersecurity tool, aes-256 encryption">
-    <meta name="author" content="Pranav R">
-    <meta name="robots" content="index, follow">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Vaultary | Identity Platform">
-    <meta property="og:description" content="Secure your passwords with military-grade encryption and real-time breach detection.">
-    <meta property="og:image" content="{{ url_for('static', filename='og-image.png') }}">
-    <meta property="og:url" content="https://vaultary.vercel.app/">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Vaultary | Identity & Security Platform">
-    <meta name="twitter:description" content="Secure your passwords with military-grade encryption and real-time breach detection.">
-    <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png') }}">
-
-    <link rel="canonical" href="https://vaultary.vercel.app/">
-    <link rel="icon" href="{{ url_for('static', filename='vaultary-favicon.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='vaultary-favicon.png') }}">
-
-    <title>Vaultary | Identity & Security Platform</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Fonts: Inter and Plus Jakarta Sans -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json" nonce="{{ csp_nonce() }}">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Vaultary",
-      "applicationCategory": "SecurityApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "description": "Advanced Identity & Security Platform. Test password strength, manage vaults, and secure your digital life.",
-      "author": {
-          "@type": "Person",
-          "name": "Pranav R"
-      }
-    }
-    </script>
+    <!-- zxcvbn -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <div id="toast-box"></div>
-
-    <nav class="navbar">
+    <!-- NAVBAR (Landing Page) -->
+    <nav class="navbar" id="landingNavbar">
         <div class="nav-brand">
-            <a href="https://vaultary.vercel.app">
-                <img src="{{ url_for('static', filename='logo.svg') }}" alt="Vaultary Logo">
+            <a href="/" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-main);">
+                <img src="{{ url_for('static', filename='vaultary.svg') }}" alt="Vaultary Logo" style="height: 36px; display: block;">
+                <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">Vaultary</span>
             </a>
         </div>
-
-        <div class="nav-actions desktop-only">
-            <button id="loginBtn" class="nav-btn">Login</button>
-            
-            <div id="userProfile" class="hidden">
-                <span id="usernameDisplay"></span>
-                <button id="dashboardBtn" class="nav-btn outline" type="button">Dashboard</button>
-            </div>
-
-            <button id="theme-toggle" class="theme-btn" type="button" data-tooltip="Toggle Theme (Ctrl+Alt+L)" aria-label="Toggle Theme">
-                <i class="fas fa-sun"></i>
+        <div class="desktop-only nav-actions" style="gap: 15px;">
+            <button class="premium-icon-btn" id="theme-toggle" title="Toggle Theme">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
+            <div id="userProfile" class="hidden">
+                <button id="dashboardBtn" class="primary-btn">Dashboard</button>
+            </div>
+            <button id="loginBtn" class="primary-btn">Sign In</button>
         </div>
-
-        <button id="mobile-menu-btn" class="mobile-only" type="button" title="Toggle Menu">
-            <i class="fas fa-bars"></i>
-        </button>
+        <button id="mobile-menu-btn" class="mobile-only"><i class="fas fa-bars"></i></button>
     </nav>
 
+    <!-- MOBILE NAV -->
     <div id="mobileNav" class="mobile-nav hidden">
         <div class="mobile-nav-content">
             <div id="mobileUsername" class="mobile-user-greeting hidden"></div>
-            
-            <button id="mobileLoginBtn" class="mobile-link" type="button">
-                <i class="fas fa-sign-in-alt"></i> <span>Login</span>
-            </button>
-            <button id="mobileDashboardBtn" class="mobile-link hidden" type="button">
-                <i class="fas fa-columns"></i> <span>Dashboard</span>
-            </button>
-            <button id="mobileThemeToggle" class="mobile-link" type="button">
-                <i class="fas fa-adjust"></i> <span>Switch Theme</span>
-            </button>
+            <button class="mobile-link" id="mobileThemeToggle"><i class="fas fa-moon"></i> Theme</button>
+            <button id="mobileDashboardBtn" class="mobile-link hidden"><i class="fas fa-columns"></i> Dashboard</button>
+            <button id="mobileLoginBtn" class="mobile-link"><i class="fas fa-sign-in-alt"></i> Sign In</button>
         </div>
     </div>
 
-    <div class="main-wrapper">
-        <section class="tool-section">
-            <div class="card tool-card">
-                <div class="header">
-                    <h2>Test Your Strength</h2>
-                    <p class="subtitle">Enter a password or generate a secure one.</p>
+    <!-- MAIN LANDING PAGE -->
+    <main class="main-wrapper" id="landingPage">
+        
+        <!-- HERO SECTION -->
+        <section class="hero-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; max-width: 1200px; margin: 0 auto; padding: 4rem 4%;">
+            <div class="hero-mesh"></div>
+            <div class="hero-content" style="position: relative; z-index: 10;">
+                <h1 class="hero-title animate-fade-in-up" style="text-align: left; margin: 0 0 1rem 0;">Security, <span>Reimagined.</span></h1>
+                <p class="hero-subtitle animate-fade-in-up stagger-1" style="text-align: left; max-width: 500px; margin: 0 0 2rem 0;">Enterprise-grade password management and digital identity protection built on Zero-Knowledge architecture.</p>
+                <div class="hero-badges animate-fade-in-up stagger-2" style="justify-content: flex-start;">
+                    <div class="hero-badge"><i class="fas fa-shield-alt"></i> AES-256 Encryption</div>
+                    <div class="hero-badge"><i class="fas fa-user-secret"></i> Zero-Knowledge</div>
+                    <div class="hero-badge"><i class="fas fa-bolt"></i> Real-time Analytics</div>
                 </div>
-                
-                <div class="input-group">
-                    <input type="password" id="passwordInput" placeholder="Type a password..." autocomplete="off">
-                    <div class="input-icons">
-                        <i class="fas fa-eye" id="togglePassword" title="Show/Hide" data-tooltip="Show/Hide"></i>
-                        <i class="fas fa-copy" id="copyBtn" title="Copy to Clipboard" data-tooltip="Copy to Clipboard"></i>
-                        <i class="fas fa-random" id="generateBtn" title="Generate Secure Password" data-tooltip="Generate"></i>
+            </div>
+            
+            <div class="hero-visual animate-fade-in-up stagger-2" style="position: relative; height: 400px; display: flex; align-items: center; justify-content: center;">
+                <div class="glass-panel" style="width: 100%; max-width: 450px; height: 320px; border-radius: 20px; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+                    <!-- Decorative Dashboard Mockup -->
+                    <div style="height: 40px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; padding: 0 15px; gap: 8px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #eab308;"></div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #22c55e;"></div>
                     </div>
-                </div>
-                <p id="capsLockWarning" class="caps-warning hidden"><i class="fas fa-exclamation-triangle"></i> Caps Lock is ON</p>
-                <p id="whitespaceWarningMain" class="caps-warning hidden"><i class="fas fa-ban"></i> Spaces are not allowed</p>
-                
-                <ul id="main-checklist" class="password-checklist hidden">
-                    <li data-req="upper"><i class="far fa-circle"></i> Uppercase</li>
-                    <li data-req="number"><i class="far fa-circle"></i> Number</li>
-                    <li data-req="special"><i class="far fa-circle"></i> Special Char</li>
-                    <li data-req="length"><i class="far fa-circle"></i> 8+ Chars</li>
-                </ul>
-
-                <div id="result-box" class="hidden">
-                    <div class="meter-wrapper">
-                        <div class="meter-container">
-                            <div id="strength-meter"></div>
+                    <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="width: 40%; height: 20px; background: rgba(255,255,255,0.1); border-radius: 4px;"></div>
+                            <div style="width: 20%; height: 20px; background: var(--primary); border-radius: 4px; opacity: 0.8;"></div>
                         </div>
-                        <div id="meter-tooltip" class="custom-tooltip"></div>
+                        <div style="width: 100%; height: 80px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);"></div>
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 1; height: 100px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);"></div>
+                            <div style="flex: 1; height: 100px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);"></div>
+                        </div>
                     </div>
-                    <div class="score-row">
-                        <span id="score-text">Weak</span>
-                        <span id="crack-time">Less than a second</span>
-                    </div>
-                    <div class="feedback">
-                        <p id="warning" class="warning"></p>
-                        <ul id="suggestions"></ul>
+                    <!-- Glowing Orb inside illustration -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                </div>
+                <!-- Floating Lock Icon -->
+                <div style="position: absolute; top: 60px; right: 10%; width: 60px; height: 60px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--primary); box-shadow: 0 10px 25px rgba(37,99,235,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary); animation: float 6s ease-in-out infinite;">
+                    <i class="fas fa-lock"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- PASSWORD ANALYZER SECTION -->
+        <section class="analyzer-wrapper animate-fade-in-up stagger-3" style="max-width: 1000px;">
+            <div class="glass-panel analyzer-card premium-glass-card">
+                <div class="analyzer-header">
+                    <h3>Password Intelligence</h3>
+                    <button id="generateBtn" class="outline-btn" title="Generate Secure Password"><i class="fas fa-random"></i> Generate</button>
+                </div>
+                
+                <div class="input-group" style="max-width: 100%; margin-bottom: 1.5rem;">
+                    <input type="password" id="passwordInput" placeholder="Enter a password to analyze...">
+                    <div class="input-icons">
+                        <i class="fas fa-eye" id="togglePassword"></i>
+                        <i class="far fa-copy" id="copyBtn"></i>
                     </div>
                 </div>
+                
+                <div class="req-checklist hidden" id="req-checklist">
+                    <div class="req-pill" id="req-length"><i class="far fa-circle"></i> 8+ Characters</div>
+                    <div class="req-pill" id="req-upper"><i class="far fa-circle"></i> Uppercase</div>
+                    <div class="req-pill" id="req-number"><i class="far fa-circle"></i> Number</div>
+                    <div class="req-pill" id="req-special"><i class="far fa-circle"></i> Special Character</div>
+                </div>
 
-                <div id="chart-container" class="hidden">
-                    <div class="chart-header">
-                        <h3><i class="fas fa-chart-pie"></i> Security Breakdown</h3>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="strengthChart"></canvas>
+                <p id="capsLockWarning" class="caps-warning hidden"><i class="fas fa-exclamation-triangle"></i> Caps Lock is ON</p>
+                <p id="whitespaceWarningMain" class="caps-warning hidden"><i class="fas fa-ban"></i> Leading/trailing spaces found</p>
+                
+                <div id="result-box" class="hidden">
+                    <div class="security-dashboard-grid">
+                        
+                        <!-- Score & Core Metrics -->
+                        <div class="premium-card analytics-panel score-panel">
+                            <div class="ring-container-lg">
+                                <svg class="score-ring-lg"><circle cx="60" cy="60" r="54" /><circle cx="60" cy="60" r="54" class="progress-lg" id="strength-meter-lg" /></svg>
+                                <div class="ring-text-lg">
+                                    <span id="score-text-lg" style="font-size: 2rem; font-weight: 800; color: var(--text-main);">0</span>
+                                </div>
+                            </div>
+                            <div class="core-metrics">
+                                <div class="metric-row">
+                                    <span class="metric-label">Strength Level</span>
+                                    <span class="metric-value" id="strength-level-text">Evaluating</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-label">Pattern Risk</span>
+                                    <span class="metric-value" id="pattern-risk">Evaluating</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-label">Dictionary Risk</span>
+                                    <span class="metric-value" id="dictionary-risk">Evaluating</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-label">Crack Time <i class="fas fa-info-circle tooltip-icon" id="entropy-tooltip" title="Entropy: 0 bits" style="color: var(--text-muted); margin-left: 6px; cursor: help;"></i></span>
+                                    <span class="metric-value" id="crack-time">Instant</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Analysis Panel (Merged Breakdown & Insights) -->
+                        <div class="premium-card analytics-panel insights-panel">
+                            <h4 style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.1rem; width: 100%;"><i class="fas fa-shield-check" style="color: var(--primary); margin-right: 8px;"></i> Security Analysis</h4>
+                            
+                            <!-- Breakdown Bars -->
+                            <div class="security-bars" style="display: flex; flex-direction: column; gap: 16px; width: 100%; margin-bottom: 2rem;">
+                                <div class="sec-bar-group">
+                                    <div class="sec-bar-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">
+                                        <span>Length</span><span id="bar-length-val">0/10</span>
+                                    </div>
+                                    <div class="sec-bar-track" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--card-border);">
+                                        <div class="sec-bar-fill" id="bar-length" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.5s ease, background 0.5s ease;"></div>
+                                    </div>
+                                </div>
+                                <div class="sec-bar-group">
+                                    <div class="sec-bar-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">
+                                        <span>Complexity</span><span id="bar-comp-val">0/10</span>
+                                    </div>
+                                    <div class="sec-bar-track" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--card-border);">
+                                        <div class="sec-bar-fill" id="bar-comp" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.5s ease, background 0.5s ease;"></div>
+                                    </div>
+                                </div>
+                                <div class="sec-bar-group">
+                                    <div class="sec-bar-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">
+                                        <span>Entropy</span><span id="bar-ent-val">0/10</span>
+                                    </div>
+                                    <div class="sec-bar-track" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--card-border);">
+                                        <div class="sec-bar-fill" id="bar-ent" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.5s ease, background 0.5s ease;"></div>
+                                    </div>
+                                </div>
+                                <div class="sec-bar-group">
+                                    <div class="sec-bar-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">
+                                        <span>Safety</span><span id="bar-safe-val">0/10</span>
+                                    </div>
+                                    <div class="sec-bar-track" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--card-border);">
+                                        <div class="sec-bar-fill" id="bar-safe" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.5s ease, background 0.5s ease;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Insights List -->
+                            <ul class="insights-list" id="insights-list">
+                                <li><i class="fas fa-spinner fa-spin"></i> Analyzing password...</li>
+                            </ul>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="workflow-section">
-            <div class="section-header center-text">
-                <h2><i class="fas fa-stream"></i> How It Works</h2>
-                <p class="subtitle">Secure identity management in 3 simple steps.</p>
-            </div>
-            <div class="workflow-steps">
-                <div class="step-card">
-                    <div class="step-icon"><i class="fas fa-user-check"></i></div>
-                    <h4>1. Verify Identity</h4>
-                    <p>Sign up securely using email or social login. Enable 2FA for maximum protection.</p>
+        <!-- SOCIAL PROOF / BUILT WITH -->
+        <section class="trust-section" style="max-width: 1000px; margin: 0 auto 5rem; text-align: center;">
+            <p style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem; font-weight: 600; margin-bottom: 2rem;">Security First Architecture</p>
+            <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; opacity: 0.8;">
+                <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); font-size: 1.1rem;">
+                    <i class="fas fa-shield-alt" style="font-size: 1.5rem; color: var(--primary);"></i> AES-256
                 </div>
-                <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
-                <div class="step-card">
-                    <div class="step-icon"><i class="fas fa-tachometer-alt"></i></div>
-                    <h4>2. Access Dashboard</h4>
-                    <p>Enter your encrypted hub. Manage your profile and security settings.</p>
+                <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); font-size: 1.1rem;">
+                    <i class="fas fa-key" style="font-size: 1.5rem; color: var(--primary);"></i> JWT Auth
                 </div>
-                <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
-                <div class="step-card">
-                    <div class="step-icon"><i class="fas fa-key"></i></div>
-                    <h4>3. Secure Vault</h4>
-                    <p>Store credentials with AES-256 encryption. Only you hold the keys.</p>
+                <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); font-size: 1.1rem;">
+                    <i class="fas fa-database" style="font-size: 1.5rem; color: var(--primary);"></i> Zero-Knowledge
                 </div>
             </div>
         </section>
 
-        <section class="details-section">
-            <div class="detail-card full-width">
-                <h3><i class="fas fa-bullseye"></i> Vaultary vs. Traditional Checkers</h3>
-                <p>Many websites use simple rules to check passwords (e.g., "Must contain 1 number"). They often rate weak passwords like "P@ssword1" as strong. <strong>Vaultary</strong> is different:</p>
-                <ul class="detail-list">
-                    <li><strong>Beyond Regex:</strong> We don't just check for character types; we analyze the <em>mathematical entropy</em> (randomness) of your input.</li>
-                    <li><strong>Smart Pattern Detection:</strong> We identify common substitutions (like '@' for 'a'), keyboard walks (qwerty), and dictionary words.</li>
-                    <li><strong>Real Security:</strong> We penalize predictable complexity that standard checkers often reward.</li>
-                </ul>
+        <!-- FEATURES SECTION -->
+        <section id="features" class="section-heading">
+            <h2>Why Vaultary?</h2>
+            <p>Designed for individuals and teams who demand the highest standard of security without compromising usability.</p>
+        </section>
+        <div class="features-grid">
+            <div class="premium-card feature-card">
+                <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                <h3>End-to-End Encryption</h3>
+                <p>Your data is encrypted and decrypted only on your device. We never have access to your master password.</p>
             </div>
-            <div class="grid-row">
-                <div class="detail-card">
-                    <h3><i class="fas fa-brain"></i> Core Functionality</h3>
-                    <ul>
-                        <li><strong>Entropy Analysis:</strong> Measures randomness.</li>
-                        <li><strong>Pattern Recognition:</strong> Detects keyboard walks and words.</li>
-                        <li><strong>Crack Time:</strong> Estimates offline hashing time.</li>
+            <div class="premium-card feature-card">
+                <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                <h3>Security Analytics</h3>
+                <p>Get a comprehensive view of your digital health, identify weak passwords, and fix them instantly.</p>
+            </div>
+            <div class="premium-card feature-card">
+                <div class="feature-icon"><i class="fas fa-fingerprint"></i></div>
+                <h3>Advanced 2FA</h3>
+                <p>Secure your vault with Time-based One-Time Passwords (TOTP) for an extra layer of protection.</p>
+            </div>
+        </div>
+
+        <!-- TECH STACK -->
+        <section id="tech" class="tech-stack-section">
+            <h2>Enterprise Technology Stack</h2>
+            <div class="tech-badges">
+                <div class="tech-badge">Python 3.10</div>
+                <div class="tech-badge">Flask & Werkzeug</div>
+                <div class="tech-badge">AES-256-GCM</div>
+                <div class="tech-badge">PBKDF2 Hashing</div>
+                <div class="tech-badge">zxcvbn Analytics</div>
+                <div class="tech-badge">JWT Authentication</div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-grid">
+                <!-- Column 1: Logo & Tools -->
+                <div>
+                    <a href="#" class="footer-brand" style="display: inline-flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; text-decoration: none; opacity: 0.95; white-space: nowrap;">
+                        <img src="{{ url_for('static', filename='vaultary.svg') }}" alt="Vaultary" style="height: 30px; width: 30px; display: block;">
+                        <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.35rem; letter-spacing: -0.04em; color: var(--text-main); margin: 0; padding: 0;">Vaultary</span>
+                    </a>
+                    <ul class="footer-brand-links" style="margin-top: 1.5rem;">
+                        <li><a href="#" id="passwordHealthLink"><i class="fas fa-heartbeat" style="color: var(--primary); width: 20px;"></i> Password Health</a></li>
+                        <li><a href="#" id="secureVaultLink"><i class="fas fa-lock" style="color: var(--primary); width: 20px;"></i> Secure Vault</a></li>
+                        <li><a href="#" id="generatorToolLink"><i class="fas fa-magic" style="color: var(--primary); width: 20px;"></i> Generator Tool</a></li>
+                        <li><a href="#" id="twoFactorIntegrationLink"><i class="fas fa-mobile-alt" style="color: var(--primary); width: 20px;"></i> 2FA Integration</a></li>
                     </ul>
                 </div>
-                <div class="detail-card">
-                    <h3><i class="fas fa-shield-virus"></i> Security Architecture</h3>
-                    <p>We prioritize data integrity and confidentiality:</p>
+                
+                <!-- Column 2: Solutions -->
+                <div>
+                    <h4>Solutions</h4>
                     <ul>
-                        <li><strong>AES-256:</strong> Military-grade encryption for your vault.</li>
-                        <li><strong>Bcrypt:</strong> Secure hashing for authentication.</li>
-                        <li><strong>Zero-Knowledge:</strong> We cannot see your stored passwords.</li>
+                        <li><a href="#">Password Auditing</a></li>
+                        <li><a href="#">Secure Storage</a></li>
+                        <li><a href="#">Breach Detection</a></li>
+                        <li><a href="#">Identity Protection</a></li>
                     </ul>
                 </div>
-                <div class="detail-card">
-                    <h3><i class="fas fa-code"></i> Tech Stack</h3>
-                    <p>Full-Stack Identity Platform:</p>
-                    <div class="tags">
-                        <span class="tag">Python Flask</span>
-                        <span class="tag">Supabase (SQL)</span>
-                        <span class="tag">JWT Auth</span>
-                        <span class="tag">Zxcvbn</span>
+                
+                <!-- Column 3: Developers -->
+                <div>
+                    <h4>Developers</h4>
+                    <ul>
+                        <li><a href="#">Source Code</a></li>
+                        <li><a href="#">Report Bug</a></li>
+                        <li><a href="#">Working</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 4: Company -->
+                <div>
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Pranav R</a></li>
+                        <li><a href="#" id="contactTrigger">Contact Us</a></li>
+                        <li><a href="#">Legal</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 5: Connect with us -->
+                <div>
+                    <h4>Connect with us</h4>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+                        <a href="#" class="social-icon" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="social-icon" title="Twitter"><i class="fab fa-twitter"></i></a>
                     </div>
-                    <div class="security-badges">
-                        <span class="tag"><i class="fas fa-lock"></i> AES-256</span>
-                        <span class="tag"><i class="fas fa-user-secret"></i> Zero-Knowledge</span>
-                        <span class="tag"><i class="fas fa-shield-virus"></i> CSRF Safe</span>
-                        <span class="tag"><i class="fas fa-database"></i> SQLi Safe</span>
-                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 200px; line-height: 1.5;">Project for educational purposes.</p>
                 </div>
             </div>
-        </section>
+            
+            <div class="footer-bottom">
+                <span>&copy; <span id="footerYear"></span> Vaultary All rights reserved.</span>
+                <span style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-globe"></i> English (India)</span>
+            </div>
+        </footer>
+    </main>
+
+    <!-- FULL PAGE DASHBOARD -->
+    <div id="appDashboard" class="hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="dashboardSidebar">
+            <div class="sidebar-header" style="display: flex; flex-direction: column; padding: 1.5rem 1.2rem 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 1.2rem;">
+                    <div class="sidebar-brand" style="display: flex; align-items: center; gap: 8px;">
+                        <img src="{{ url_for('static', filename='vaultary.svg') }}" alt="Vaultary" style="height: 24px;">
+                        <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; color: var(--text-main);">Vaultary</span>
+                    </div>
+                    <button id="mobileDashToggle"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            
+            <nav class="nav-menu" style="padding: 0 1rem;">
+                <button class="nav-item" id="dashHomeBtn"><i class="fas fa-home"></i> Home</button>
+                <button class="nav-item active dash-tab" data-target="overview-section"><i class="fas fa-columns"></i> Dashboard</button>
+                <button class="nav-item dash-tab" data-target="vault-section"><i class="fas fa-lock"></i> Vault</button>
+                <button class="nav-item dash-tab" data-target="notes-section"><i class="fas fa-sticky-note"></i> Secure Notes</button>
+                <button class="nav-item dash-tab" data-target="security-center-section"><i class="fas fa-shield-alt"></i> Security Center</button>
+                <button class="nav-item dash-tab hidden" id="dashAdminTab" data-target="admin-section"><i class="fas fa-users-cog"></i> Admin Panel</button>
+                <button class="nav-item dash-tab" data-target="profile-section"><i class="fas fa-cog"></i> Settings</button>
+            </nav>
+            
+            <div class="user-profile-sm" style="align-items: center; padding: 1rem 1.2rem; border-top: 1px solid var(--card-border); margin-top: auto;">
+                <div id="dashProfileInitials" style="width: 32px; height: 32px; border-radius: 8px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;">PA</div>
+                <div class="user-info-sm" style="flex: 1; margin-left: 12px;">
+                    <h4 id="dashUsername" style="margin: 0; font-size: 0.9rem; font-weight: 700;">User</h4>
+                    <div id="dashRole" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Premium Member</div>
+                </div>
+                <button id="dashLogoutBtn" class="action-icon" title="Sign Out" style="padding: 6px; font-size: 1rem; opacity: 0.5;"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="dashboard-main">
+            <header class="dashboard-header" style="height: auto; min-height: var(--nav-height); padding-top: 1.5rem; padding-bottom: 1.5rem;">
+                <div style="display:flex; align-items:center; gap: 16px;">
+                    <button id="mobileDashOpen" class="mobile-only" style="background:transparent; border:none; font-size:1.5rem; color:var(--text-main); cursor:pointer;"><i class="fas fa-bars"></i></button>
+                    <h2 class="dashboard-title" id="dashTitle" style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin: 0;">Overview</h2>
+                </div>
+                <div class="dashboard-actions" style="display: flex; gap: 12px; align-items: center;">
+                    <button class="premium-icon-btn" id="dashThemeToggle" title="Toggle Theme">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                
+                <!-- OVERVIEW SECTION -->
+                <section id="overview-section" class="dash-view active">
+                    
+                    <div style="display: flex; flex-direction: column; gap: 24px; max-width: 960px; margin: 0 auto;">
+                        
+                        <!-- SECURITY HERO (CONTEXTUAL WEIGHTED RISK COCKPIT) -->
+                        <div class="premium-card hero-health-card" style="padding: 2rem 2.5rem; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden;">
+                            <div style="position: relative; z-index: 2;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Contextual Security Index</span>
+                                    <span id="dashGradeBadge" class="grade-pill grade-a" style="font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 0.85rem;">A+</span>
+                                </div>
+                                <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+                                    <span id="dashHealthScoreText" style="font-size: 3.8rem; font-weight: 800; color: var(--text-main); letter-spacing: -2px; line-height: 1;">--</span>
+                                    <span style="font-size: 1.5rem; font-weight: 600; color: var(--text-muted);">/100</span>
+                                </div>
+                                <div id="dashHealthClassification" style="font-size: 1.15rem; font-weight: 700; color: var(--success); margin-bottom: 4px;">Analyzing Vault...</div>
+                                <div id="dashHealthContext" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted); max-width: 460px;">Calculated using asset criticality weighting, breach intelligence, and blast radius.</div>
+                            </div>
+                            
+                            <div style="position: relative; z-index: 2; display: flex; align-items: center; gap: 24px;">
+                                <!-- Circular SVG Gauge -->
+                                <div style="position: relative; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center;">
+                                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--card-border)" stroke-width="8"></circle>
+                                        <circle id="dashHealthRing" cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease, stroke 0.5s ease;"></circle>
+                                    </svg>
+                                    <i class="fas fa-shield-alt" style="position: absolute; font-size: 1.8rem; color: var(--primary);"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STATS ROW (WEIGHTED AUDIT METRICS) -->
+                        <div class="stats-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                            <div class="premium-card metric-card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; min-height: 120px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Passwords</span>
+                                    <i class="fas fa-key" style="font-size: 1.25rem; color: var(--primary);"></i>
+                                </div>
+                                <div>
+                                    <div id="summaryTotal" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">0</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;"><span id="summaryCriticalCount">0</span> Critical Assets</div>
+                                </div>
+                            </div>
+                            <div class="premium-card metric-card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; min-height: 120px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Weak / Vuln</span>
+                                    <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem; color: var(--warning);"></i>
+                                </div>
+                                <div>
+                                    <div id="summaryWeak" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">0</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;"><span id="summaryCritVulnCount">0</span> Critical At Risk</div>
+                                </div>
+                            </div>
+                            <div class="premium-card metric-card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; min-height: 120px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Blast Radius</span>
+                                    <i class="fas fa-network-wired" style="font-size: 1.25rem; color: var(--danger);"></i>
+                                </div>
+                                <div>
+                                    <div id="summaryReused" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">0</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Cross-Tier Clusters</div>
+                                </div>
+                            </div>
+                            <div class="premium-card metric-card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; min-height: 120px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Breached (HIBP)</span>
+                                    <i class="fas fa-biohazard" style="font-size: 1.25rem; color: #f43f5e;"></i>
+                                </div>
+                                <div>
+                                    <div id="summaryBreached" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">0</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Publicly Exposed</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- QUICK ACTIONS -->
+                        <div class="quick-actions-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                            <button class="command-pill" onclick="document.querySelector('[data-target=\'vault-section\']').click(); setTimeout(()=>document.getElementById('openAddVaultModal').click(), 100);">
+                                <i class="fas fa-plus" style="color: var(--primary);"></i> Add Password
+                                <span class="shortcut-tooltip">Ctrl+Alt+P</span>
+                            </button>
+                            <button class="command-pill" id="quickDeployCanaryBtn" onclick="document.getElementById('openDeployCanaryModal').click();">
+                                <i class="fas fa-fire" style="color: #f97316;"></i> Deploy Canary
+                                <span class="shortcut-tooltip">Tripwire</span>
+                            </button>
+                            <button class="command-pill" onclick="document.querySelector('[data-target=\'security-center-section\']').click();">
+                                <i class="fas fa-shield-alt" style="color: var(--success);"></i> Security Cockpit
+                                <span class="shortcut-tooltip">Deep Audit</span>
+                            </button>
+                        </div>
+
+                        <!-- SECURITY REMEDIATION ROADMAP -->
+                        <div class="premium-card" style="padding: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                                <div>
+                                    <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Remediation Roadmap</h4>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Prioritized security actions ranked by impact on your score.</p>
+                                </div>
+                                <button class="outline-btn" onclick="document.querySelector('[data-target=\'security-center-section\']').click();" style="padding: 6px 12px; font-size: 0.85rem;">View Full Audit <i class="fas fa-arrow-right" style="margin-left: 6px;"></i></button>
+                            </div>
+                            <div id="securityRecommendationsList" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- VAULT SECTION -->
+                <section id="vault-section" class="dash-view">
+                    <div class="vault-controls" style="flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;">
+                        <div class="search-bar" style="flex: 1; min-width: 260px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="vaultSearch" placeholder="Search passwords, assets, categories, usernames...">
+                        </div>
+                        <div style="display:flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <span id="vaultCountText" style="font-weight: 600; color: var(--text-muted); font-size: 0.95rem;"></span>
+                            <button id="openDeployCanaryModal" class="outline-btn" style="border-color: rgba(249, 115, 22, 0.4); color: #fb923c;"><i class="fas fa-fire"></i> Deploy Canary</button>
+                            <button id="exportVaultBtn" class="outline-btn"><i class="fas fa-download"></i> Export</button>
+                            <button id="openAddVaultModal" class="primary-btn"><i class="fas fa-plus"></i> Add Item</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Pills -->
+                    <div class="vault-filter-bar" style="display: flex; gap: 8px; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 4px;">
+                        <button class="filter-pill active" data-filter="all">All Items</button>
+                        <button class="filter-pill" data-filter="critical"><i class="fas fa-shield-virus" style="color: #ef4444;"></i> Critical</button>
+                        <button class="filter-pill" data-filter="breached"><i class="fas fa-biohazard" style="color: #f43f5e;"></i> Breached</button>
+                        <button class="filter-pill" data-filter="canary"><i class="fas fa-fire" style="color: #f97316;"></i> Canary Lures</button>
+                        <button class="filter-pill" data-filter="zero_knowledge"><i class="fas fa-lock" style="color: #8b5cf6;"></i> Zero-Knowledge</button>
+                    </div>
+
+                    <div id="vaultGrid" class="vault-grid">
+                        <p class="text-muted">Loading vault...</p>
+                    </div>
+                </section>
+
+                <!-- SECURITY CENTER SECTION (FULL CYBERSECURITY COCKPIT) -->
+                <section id="security-center-section" class="dash-view">
+                    <div style="display: flex; flex-direction: column; gap: 24px; max-width: 960px; margin: 0 auto;">
+                        
+                        <!-- HERO AUDIT CARD -->
+                        <div class="premium-card" style="padding: 2.2rem 2.5rem; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 280px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Contextual Security Audit</span>
+                                    <span id="auditGradeBadge" class="grade-pill grade-a" style="font-weight: 800; padding: 2px 10px; border-radius: 6px; font-size: 0.9rem;">A+</span>
+                                </div>
+                                <h3 id="auditPostureTitle" style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 6px; color: var(--text-main);">Hardened Security Posture</h3>
+                                <p id="auditPostureDesc" style="font-size: 0.95rem; color: var(--text-muted); margin: 0 0 1.25rem; line-height: 1.5;">Calculated via multi-factor weighting: asset criticality multiplier (3.5x for financial/email), password reuse blast radius, HaveIBeenPwned breach checks, and credential age hygiene.</p>
+                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                    <button id="runDeepAuditBtn" class="primary-btn" style="padding: 8px 16px; font-size: 0.9rem;"><i class="fas fa-sync-alt"></i> Run Deep Audit</button>
+                                    <button id="scanBreachesBtn" class="outline-btn" style="padding: 8px 16px; font-size: 0.9rem; border-color: rgba(244, 63, 94, 0.4); color: #f43f5e;"><i class="fas fa-biohazard"></i> Scan 14B+ Leaks (HIBP)</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 130px;">
+                                <div style="position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--card-border)" stroke-width="8"></circle>
+                                        <circle id="auditHealthRing" cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease, stroke 0.5s ease;"></circle>
+                                    </svg>
+                                    <div style="position: absolute; display: flex; flex-direction: column; align-items: center;">
+                                        <span id="auditScoreText" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">--</span>
+                                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">SCORE</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4 KEY RISK DIMENSIONS BAR -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                            <div class="premium-card" style="padding: 1.25rem;">
+                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Critical Vulnerability</div>
+                                <div id="auditCritVulnText" style="font-size: 1.6rem; font-weight: 800; color: var(--text-main);">0</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">High-impact assets at risk</div>
+                            </div>
+                            <div class="premium-card" style="padding: 1.25rem;">
+                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Blast Radius</div>
+                                <div id="auditBlastRadiusText" style="font-size: 1.6rem; font-weight: 800; color: var(--text-main);">0 Clusters</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Cross-domain reuse</div>
+                            </div>
+                            <div class="premium-card" style="padding: 1.25rem;">
+                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Breached Accounts</div>
+                                <div id="auditBreachedText" style="font-size: 1.6rem; font-weight: 800; color: var(--text-main);">0</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Spotted in public leaks</div>
+                            </div>
+                            <div class="premium-card" style="padding: 1.25rem;">
+                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Stale Hygiene</div>
+                                <div id="auditStaleText" style="font-size: 1.6rem; font-weight: 800; color: var(--text-main);">0</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Unchanged >90 days</div>
+                            </div>
+                        </div>
+
+                        <!-- ACTIONABLE REMEDIATION ROADMAP -->
+                        <div class="premium-card" style="padding: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                                <div>
+                                    <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Priority Remediation Queue</h4>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Ranked tasks with estimated security score point gains.</p>
+                                </div>
+                            </div>
+                            <div id="auditRoadmapList" style="display: flex; flex-direction: column; gap: 10px;">
+                                <p class="text-muted" style="padding: 1rem 0;">Analyzing remediation roadmap...</p>
+                            </div>
+                        </div>
+
+                        <!-- REUSE BLAST RADIUS INSPECTOR -->
+                        <div class="premium-card" style="padding: 2rem;">
+                            <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Cross-Domain Blast Radius Map</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Identifies where a credential leak on a low-security service compromises high-value accounts.</p>
+                            <div id="blastRadiusList" style="display: flex; flex-direction: column; gap: 12px;">
+                                <p class="text-muted" style="padding: 1rem 0;">No password reuse detected. Excellent credential hygiene.</p>
+                            </div>
+                        </div>
+
+                        <!-- ACTIVE DECEPTION & CANARY HONEYPOT MONITOR -->
+                        <div class="premium-card" style="padding: 2rem; border-left: 4px solid #f97316;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0;">Deception & Canary Tripwires</h4>
+                                        <span class="canary-radar-badge"><span class="canary-ping-dot"></span> Armed & Monitoring</span>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 4px 0 0;">Decoy credentials deployed to detect unauthorized intrusion or insider threats.</p>
+                                </div>
+                                <button class="primary-btn" onclick="document.getElementById('openDeployCanaryModal').click();" style="padding: 6px 14px; font-size: 0.85rem; background: #ea580c;"><i class="fas fa-fire"></i> Deploy Canary</button>
+                            </div>
+                            <div id="canaryLuresList" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- LIVE SECURITY INCIDENT TIMELINE -->
+                        <div class="premium-card" style="padding: 2rem;">
+                            <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Security Audit & Incident Feed</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Recent security events, tripwire logs, and authentication milestones.</p>
+                            <div id="securityIncidentTimeline" style="display: flex; flex-direction: column; gap: 12px;">
+                                <p class="text-muted" style="padding: 1rem 0;">No active intrusion incidents detected. Your vault perimeter is secure.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECURE NOTES SECTION -->
+                <section id="notes-section" class="dash-view">
+                    <div class="vault-controls">
+                        <h3>Your Notes</h3>
+                        <button id="openAddNoteModal" class="primary-btn"><i class="fas fa-plus"></i> New Note</button>
+                    </div>
+                    <div id="notesGrid" class="vault-grid"></div>
+                </section>
+
+                <!-- SETTINGS SECTION -->
+                <!-- SETTINGS SECTION -->
+                <section id="profile-section" class="dash-view">
+                    <!-- 1. Personal Information -->
+                    <div class="premium-card" style="padding: 2rem; margin-bottom: 1.5rem;">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Personal Information</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+                            <div style="margin-bottom: 0;">
+                                <div class="input-icon-group">
+                                    <i class="fas fa-user input-leading-icon"></i>
+                                    <input type="text" id="editUsername" class="icon-input" placeholder="Username" style="width: 100%;">
+                                </div>
+                                <p id="editUsernameError" class="error-msg hidden"></p>
+                            </div>
+                            <div style="margin-bottom: 0;">
+                                <div class="input-icon-group">
+                                    <i class="fas fa-envelope input-leading-icon"></i>
+                                    <input type="email" id="editEmail" class="icon-input" placeholder="Email Address" style="width: 100%;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 0;">
+                                <div class="input-icon-group">
+                                    <i class="fas fa-phone-alt input-leading-icon"></i>
+                                    <input type="text" id="editPhone" class="icon-input" placeholder="Phone Number" style="width: 100%;">
+                                </div>
+                                <p id="editPhoneError" class="error-msg hidden"></p>
+                            </div>
+                            <div style="margin-bottom: 0;">
+                                <div class="input-icon-group">
+                                    <i class="fas fa-calendar-alt input-leading-icon"></i>
+                                    <input type="text" id="editDob" class="icon-input" placeholder="Date of Birth (DD/MM/YYYY)" style="width: 100%;">
+                                </div>
+                                <p id="editDobError" class="error-msg hidden"></p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <button id="saveProfileBtn" class="primary-btn">Save Changes</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Security & Authentication -->
+                    <div class="premium-card" style="padding: 2rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0; font-size: 1.25rem;">Security & Authentication</h3>
+                            <button id="toggle2FABtn" class="outline-btn" style="padding: 6px 12px; font-size: 0.9rem;"><i class="fas fa-shield-alt"></i> Two-Factor Auth</button>
+                        </div>
+                        
+                        <h4 style="margin-bottom: 1rem; color: var(--text-main); font-weight: 600;">Change Password</h4>
+                        <div style="display: grid; gap: 1rem;">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label>Current Password</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="changePassCurrent" placeholder="Enter current password">
+                                    <button type="button" class="toggle-password-btn" data-target="changePassCurrent"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 1.5rem;">
+                                <div class="input-group" style="margin-bottom: 0;">
+                                    <label>New Password</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="changePassNew" placeholder="Enter new password">
+                                        <button type="button" class="toggle-password-btn" data-target="changePassNew"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                    <!-- Password Strength Meter (Compact) -->
+                                    <div class="password-strength-container" style="margin-top: 8px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                            <div style="display: flex; gap: 8px; align-items: center;">
+                                                <span style="color: var(--text-main); font-weight: 600; font-size: 0.85rem;">Strength: <span id="chgPwdStrengthLabel" style="color: var(--text-main);">Weak</span></span>
+                                            </div>
+                                            <div style="display: flex; gap: 4px; width: 100px;">
+                                                <div class="pwd-bar pwd-bar-empty" id="chgPwdBar1" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                                <div class="pwd-bar pwd-bar-empty" id="chgPwdBar2" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                                <div class="pwd-bar pwd-bar-empty" id="chgPwdBar3" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                                <div class="pwd-bar pwd-bar-empty" id="chgPwdBar4" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                            </div>
+                                        </div>
+                                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.75rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                                            <li id="chgReqUpper">○ Uppercase</li>
+                                            <li id="chgReqNum">○ Number</li>
+                                            <li id="chgReqSpec">○ Special Character</li>
+                                            <li id="chgReqLen">○ 8+ Characters</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="input-group" style="margin-bottom: 0;">
+                                    <label>Confirm New Password</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="changePassConfirm" placeholder="Confirm new password">
+                                        <button type="button" class="toggle-password-btn" data-target="changePassConfirm"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                            <button id="changePasswordBtn" class="primary-btn">Change Password</button>
+                            <a href="#" id="profileForgotPassLink" style="color: var(--primary); font-size: 0.9rem; font-weight: 500; text-decoration: none;">Forgot Password?</a>
+                        </div>
+                    </div>
+
+                    <!-- 3. Panic & Duress Defense (Decoy Mode) -->
+                    <div class="premium-card" style="padding: 2rem; margin-bottom: 1.5rem; border-left: 4px solid #f97316;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0; font-size: 1.25rem;"><i class="fas fa-shield-virus" style="color: #f97316; margin-right: 8px;"></i> Panic & Duress Defense (Decoy Mode)</h3>
+                            <span id="duressStatusBadge" class="grade-pill" style="background: rgba(249, 115, 22, 0.15); color: #fb923c; font-weight: 700;">Deception Armed</span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.25rem;">
+                            If you are ever coerced or forced to unlock your Vaultary account under physical threat, enter this <strong>Duress PIN</strong> instead of your master password. 
+                            The system will automatically log you into a convincing <strong>sanitized decoy vault</strong>, completely hiding all sensitive banking and personal credentials while dispatching a silent tripwire alert to your email.
+                        </p>
+                        <div style="display: flex; gap: 12px; max-width: 420px; align-items: center;">
+                            <input type="password" id="duressPinInput" placeholder="Enter 4-8 digit Duress PIN" maxlength="8" style="flex: 1; padding: 10px 14px; font-family: monospace; letter-spacing: 2px;">
+                            <button id="saveDuressPinBtn" class="outline-btn" style="border-color: rgba(249, 115, 22, 0.4); color: #fb923c; white-space: nowrap;"><i class="fas fa-key"></i> Arm PIN</button>
+                            <button id="clearDuressPinBtn" class="outline-btn" title="Disable Duress PIN" style="padding: 10px 14px;"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <p id="duressPinMessage" class="error-msg hidden" style="margin-top: 8px;"></p>
+                    </div>
+
+                    <!-- 4. Danger Zone -->
+                    <div class="premium-card" style="padding: 2rem; border: 1px solid rgba(239, 68, 68, 0.2);">
+                        <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem; color: var(--danger);">Danger Zone</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Once you delete your account, there is no going back. Please be certain.</p>
+                        <button id="deleteAccountBtn" class="danger-btn">Delete Account</button>
+                    </div>
+                </section>
+
+                <!-- ADMIN SECTION -->
+                <section id="admin-section" class="dash-view">
+                    <div class="premium-card" style="padding: 2rem;">
+                        <h3>User Management</h3>
+                        <table id="userTable" style="width:100%; text-align: left; margin-top: 1rem;">
+                            <thead>
+                                <tr><th>ID</th><th>Username</th><th>Email</th><th>Admin</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="userTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
     </div>
 
-    <footer class="mega-footer">
-        <div class="footer-content">
-            <div class="footer-col brand-col">
-                <div class="footer-brand">
-                    <a href="https://vaultary.vercel.app">
-                        <img src="{{ url_for('static', filename='logo.svg') }}" alt="Vaultary Logo">
-                    </a>
-                </div>
-                <ul class="footer-links feature-list">
-                    <li><a href="#" id="passwordHealthLink"><i class="fas fa-heartbeat"></i> Password Health</a></li>
-                    <li><a href="#" id="secureVaultLink"><i class="fas fa-lock"></i> Secure Vault</a></li>
-                    <li><a href="#" id="generatorToolLink"><i class="fas fa-magic"></i> Generator Tool</a></li>
-                    <li><a href="#" id="twoFactorIntegrationLink"><i class="fas fa-mobile-alt"></i> 2FA Integration</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Solutions</h4>
-                <ul class="footer-links">
-                    <li>Password Auditing</li>
-                    <li>Secure Storage</li>
-                    <li>Breach Detection</li>
-                    <li>Identity Protection</li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Developers</h4>
-                <ul class="footer-links">
-                    <li><a href="https://github.com/Pranavr06/Vaultary" target="_blank" rel="noopener noreferrer">Source Code</a></li>
-                    <li><a href="https://github.com/Pranavr06/Vaultary/blob/main/.github/ISSUE_TEMPLATE/bug_report.md" target="_blank" rel="noopener noreferrer">Report Bug</a></li>
-                    <li><a href="https://pranavr.netlify.app/projects/vaultary" target="_blank" rel="noopener noreferrer">Working</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <ul class="footer-links">
-                    <li><a href="https://pranavr.netlify.app/" target="_blank" rel="noopener noreferrer">About Pranav R</a></li>
-                    <li><a href="#" id="contactTrigger">Contact Us</a></li>
-                    <li><a href="#" class="legal-trigger" data-tab="tab-privacy">Legal</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Connect with us</h4>
-                <div class="footer-socials">
-                    <a href="https://github.com/pranavr06" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                    <a href="https://www.linkedin.com/in/pranavr06/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://x.com/PranavR2006" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                </div>
-                <p class="footer-disclaimer">Project for educational purposes.</p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="copyright">
-                &copy; <span id="footerYear"></span> Vaultary All rights reserved.
-            </div>
-            <div class="region-selector">
-                <i class="fas fa-globe"></i> English (India)
-            </div>
-        </div>
-    </footer>
+    <!-- Toast Notification -->
+    <div id="toast-box"></div>
 
+    <!-- MODALS (Hidden by default) -->
+    <!-- (I'll keep the required IDs for modals here to ensure `script.js` doesn't break) -->
     <div id="authModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-auth" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2 id="modalTitle">Login</h2>
+        <div class="modal-content premium-modal">
+            <span class="close-modal circular-close close-auth" title="Close"><i class="fas fa-times"></i></span>
+            <div class="modal-header" style="padding-bottom: 1rem;">
+                <h2 style="font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px;">Welcome Back</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Access your encrypted vault securely.</p>
             </div>
-            <div class="modal-body">
-                <input type="text" id="authUsername" placeholder="Username or Email" autocomplete="username" title="Username or Email">
-                
-                <input type="text" id="authPhone" placeholder="Phone Number (Optional)" class="hidden" title="Phone" autocomplete="tel">
-                <p id="authPhoneError" class="error-msg field-error hidden"></p>
-                
-                <input type="text" id="authEmail" placeholder="Email Address (Required)" class="hidden" title="Email" autocomplete="email">
-                
-                <input type="text" id="authDob" placeholder="Date of Birth (DD/MM/YYYY)" class="hidden" title="Date of Birth" maxlength="10">
-                <p id="authDobError" class="error-msg field-error hidden"></p>
-
-                <div class="input-group-auth">
-                    <input type="password" id="authPassword" placeholder="Password" title="Password" autocomplete="current-password">
-                    <i class="fas fa-eye password-toggle-icon" id="toggleAuthPassword" role="button" tabindex="0" aria-label="Toggle password visibility"></i>
+            <div class="modal-body" style="padding-bottom: 1.5rem;">
+                <div class="input-icon-group" style="margin-bottom: 0.75rem; position: relative;">
+                    <i class="fas fa-user input-leading-icon"></i>
+                    <input type="text" id="authUsername" class="icon-input" placeholder="Username">
                 </div>
-                <p id="whitespaceWarningAuth" class="caps-warning hidden"><i class="fas fa-ban"></i> Spaces are not allowed</p>
                 
-                <ul id="auth-checklist" class="password-checklist hidden">
-                    <li data-req="upper"><i class="far fa-circle"></i> Uppercase</li>
-                    <li data-req="number"><i class="far fa-circle"></i> Number</li>
-                    <li data-req="special"><i class="far fa-circle"></i> Special Char</li>
-                    <li data-req="length"><i class="far fa-circle"></i> 8+ Chars</li>
-                </ul>
-
-                <div class="auth-extras">
-                    <a href="#" id="forgotPasswordLink" class="forgot-link">Forgot Password?</a>
+                <div class="input-icon-group" style="margin-bottom: 0.25rem; position: relative;">
+                    <i class="fas fa-lock input-leading-icon"></i>
+                    <input type="password" id="authPassword" class="icon-input" placeholder="Password">
+                    <i class="fas fa-eye input-icons toggle-eye" id="toggleAuthPassword"></i>
                 </div>
-            
-                <button id="authSubmitBtn" class="primary-btn" type="button">Login</button>
+
+                <div class="auth-extras" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+                    <a href="#" id="forgotPasswordLink" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; transition: color 0.2s;">Forgot Password?</a>
+                </div>
                 
-                <div class="divider"><span>OR</span></div>
+                <p id="authMessage" class="error-msg" style="margin-bottom: 0.5rem;"></p>
+                <button id="authSubmitBtn" class="primary-btn premium-login-btn full-width" style="margin-bottom: 0.75rem;">Sign In</button>
                 
-                <a href="/login/google" class="social-btn google-btn">
-                    <i class="fab fa-google"></i> Continue with Google
+                <div class="security-indicator" style="margin-top: 0;">
+                    <i class="fas fa-lock" style="color: var(--success);"></i> <span style="color: var(--text-main);">Protected with encrypted authentication</span>
+                </div>
+
+                <div class="divider" style="margin: 1.25rem 0;">
+                    <span style="color: var(--text-muted);">OR</span>
+                </div>
+                
+                <a href="/login/google" class="social-btn premium-social" style="margin-bottom: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Continue with Google
                 </a>
-            
-                <a href="/login/github" class="social-btn github-btn">
-                    <i class="fab fa-github"></i> Continue with GitHub
-                </a>
+                <a href="/login/github" class="social-btn premium-social" style="margin-bottom: 0.5rem;"><i class="fab fa-github" style="font-size: 18px;"></i> Continue with GitHub</a>
                 
-                <!-- <a href="/login/linkedin" class="social-btn linkedin-btn">
-                    <i class="fab fa-linkedin"></i> Continue with LinkedIn
-                </a> -->
-            
-                <p class="auth-switch">
-                    <span id="switchText">Don't have an account?</span> 
-                    <a href="#" id="switchAuthMode">Register</a>
-                </p>
-                <p id="authMessage" class="error-msg"></p>
+                <p class="auth-switch" style="margin-top: 1.25rem;"><span style="color: var(--text-muted);">No account?</span> <a href="#" id="openRegisterModal" style="color: var(--text-main); font-weight: 600;">Register</a></p>
             </div>
+        </div>
+    </div>
+
+    <!-- REGISTER MODAL -->
+    <div id="registerModal" class="modal hidden">
+        <div class="modal-content premium-modal reg-modal-content">
+            <span class="close-modal circular-close close-register" title="Close"><i class="fas fa-times"></i></span>
+            
+            <div id="registerFormView">
+                <div class="modal-header" style="padding-bottom: 1rem;">
+                    <h2 style="font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px;">Create Account</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Create your secure digital vault.</p>
+                </div>
+                <div class="modal-body" style="padding-bottom: 1.5rem; max-height: 85vh; overflow-y: auto;">
+                    
+                    <div class="reg-grid">
+                        <!-- Left Column / Top -->
+                        <div>
+                            <div class="input-icon-group" style="margin-bottom: 0.25rem;">
+                                <i class="fas fa-user input-leading-icon"></i>
+                                <input type="text" id="regUsername" class="icon-input" placeholder="Username">
+                            </div>
+                            <div id="regUsernameFeedback" class="validation-feedback" style="margin-bottom: 0.5rem; min-height: 18px;"></div>
+                        </div>
+
+                        <!-- Right Column / Top -->
+                        <div>
+                            <div class="input-icon-group" style="margin-bottom: 0.25rem;">
+                                <i class="fas fa-envelope input-leading-icon"></i>
+                                <input type="email" id="regEmail" class="icon-input" placeholder="Email Address">
+                            </div>
+                            <div id="regEmailFeedback" class="validation-feedback" style="margin-bottom: 0.5rem; min-height: 18px;"></div>
+                        </div>
+
+                        <!-- Left Column / Bottom -->
+                        <div>
+                            <div class="input-icon-group" style="margin-bottom: 0.25rem;">
+                                <i class="fas fa-phone input-leading-icon"></i>
+                                <input type="text" id="regPhone" class="icon-input" placeholder="Phone Number" title="Used for account recovery and security verification.">
+                            </div>
+                            <div style="margin-bottom: 0.5rem; min-height: 18px;"></div>
+                        </div>
+
+                        <!-- Right Column / Bottom -->
+                        <div>
+                            <div class="input-icon-group" style="margin-bottom: 0.25rem;">
+                                <i class="fas fa-calendar input-leading-icon"></i>
+                                <input type="text" id="regDob" class="icon-input" placeholder="Date of Birth (DD/MM/YYYY)" title="Required for identity verification and account protection.">
+                            </div>
+                            <div id="regDobFeedback" class="validation-feedback" style="margin-bottom: 0.5rem; min-height: 18px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Password (Full width) -->
+                    <div class="input-icon-group" style="margin-bottom: 0.5rem;">
+                        <i class="fas fa-lock input-leading-icon"></i>
+                        <input type="password" id="regPassword" class="icon-input" placeholder="Password">
+                        <i class="fas fa-eye input-icons toggle-eye" id="toggleRegPassword"></i>
+                    </div>
+                    
+                    <!-- Password Strength Meter (Compact) -->
+                    <div class="password-strength-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <span style="color: var(--text-main); font-weight: 600; font-size: 0.85rem;">Strength: <span id="pwdStrengthLabel" style="color: var(--text-main);">Weak</span></span>
+                            </div>
+                            <div style="display: flex; gap: 4px; width: 100px;">
+                                <div class="pwd-bar pwd-bar-empty" id="pwdBar1" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                <div class="pwd-bar pwd-bar-empty" id="pwdBar2" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                <div class="pwd-bar pwd-bar-empty" id="pwdBar3" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                                <div class="pwd-bar pwd-bar-empty" id="pwdBar4" style="flex: 1; height: 4px; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.75rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <li id="reqUpper">○ Uppercase</li>
+                            <li id="reqNum">○ Number</li>
+                            <li id="reqSpec">○ Special Character</li>
+                            <li id="reqLen">○ 8+ Characters</li>
+                        </ul>
+                    </div>
+
+                    <p id="regMessage" class="error-msg" style="margin-bottom: 0.5rem;"></p>
+                    <button id="registerSubmitBtn" class="primary-btn premium-login-btn full-width" style="margin-bottom: 0.75rem;">Create Account</button>
+                    
+                    <div class="security-indicator" style="margin-top: 0; margin-bottom: 1rem;">
+                        <i class="fas fa-lock" style="color: var(--success);"></i> <span style="color: var(--text-main); font-size: 0.85rem;">Your information is encrypted and securely protected.</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;">
+                        <a href="/login/google" class="social-btn premium-social" style="margin-bottom: 0; padding: 0.6rem; justify-content: center; font-size: 0.9rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                            Google
+                        </a>
+                        <a href="/login/github" class="social-btn premium-social" style="margin-bottom: 0; padding: 0.6rem; justify-content: center; font-size: 0.9rem;"><i class="fab fa-github" style="font-size: 18px;"></i> GitHub</a>
+                    </div>
+                    
+                    <p class="auth-switch" style="margin-top: 0.5rem; margin-bottom: 0;"><span style="color: var(--text-muted);">Already have an account?</span> <a href="#" id="openLoginModal" style="color: var(--text-main); font-weight: 600;">Sign In</a></p>
+                </div>
+            </div>
+
+            <!-- Registration Success View -->
+            <div id="registerSuccessView" class="hidden">
+                <div class="modal-header" style="padding-bottom: 0.5rem; padding-top: 3.5rem;">
+                    <div style="width: 64px; height: 64px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <i class="fas fa-check" style="font-size: 1.8rem; color: var(--success);"></i>
+                    </div>
+                    <h2 style="font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px;">Account Created</h2>
+                </div>
+                <div class="modal-body" style="padding-bottom: 2.5rem; text-align: center;">
+                    <p style="color: var(--text-main); font-size: 1.05rem; margin-bottom: 0.5rem; line-height: 1.5;">Welcome to Vaultary.</p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">Please check your email to verify your account before logging in.</p>
+                    
+                    <button id="successBackToLoginBtn" class="primary-btn premium-login-btn full-width" style="margin-bottom: 0;">Back to Sign In</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div id="forgotModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-forgot" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Reset Password</h2>
-                <p class="subtitle">Enter your email to receive a reset link.</p>
-            </div>
-            <div class="modal-body">
-                <input type="email" id="forgotEmail" placeholder="Enter your email address" autocomplete="email">
-                <button id="forgotSubmitBtn" class="primary-btn" type="button">Send Link</button>
-                <p id="forgotMessage" class="error-msg forgot-message"></p>
-            </div>
-        </div>
-    </div>
-
-    <div id="resetModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-reset" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>New Password</h2>
-                <p class="subtitle">Enter your new secure password.</p>
-            </div>
-            <div class="modal-body">
-                <div class="input-group-auth">
-                    <input type="password" id="newResetPassword" placeholder="New Password" autocomplete="off">
-                    <i class="fas fa-eye password-toggle-icon" id="toggleResetPassword" role="button" tabindex="0" aria-label="Toggle password visibility" title="Toggle password visibility"></i>
+        <div class="modal-content premium-modal">
+            <span class="close-modal circular-close close-forgot" title="Close"><i class="fas fa-times"></i></span>
+            
+            <!-- Default Form View -->
+            <div id="forgotFormView">
+                <div class="modal-header" style="padding-bottom: 1rem;">
+                    <h2 style="font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px;">Reset Password</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0; line-height: 1.4;">We'll send a secure password reset link to your email address.</p>
                 </div>
-                <ul id="reset-checklist" class="password-checklist hidden">
-                    <li data-req="upper"><i class="far fa-circle"></i> Uppercase</li>
-                    <li data-req="number"><i class="far fa-circle"></i> Number</li>
-                    <li data-req="special"><i class="far fa-circle"></i> Special Char</li>
-                    <li data-req="length"><i class="far fa-circle"></i> 8+ Chars</li>
-                </ul>
-                <button id="resetSubmitBtn" class="primary-btn" type="button">Update Password</button>
-                <p id="resetMessage" class="error-msg"></p>
-            </div>
-        </div>
-    </div>
-
-    <div id="contactModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-contact" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Contact Support</h2>
-                <p class="subtitle">We'll get back to you via email.</p>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="contactName" placeholder="Your Name">
-                <input type="email" id="contactEmail" placeholder="Your Email">
-                <textarea id="contactMessage" placeholder="How can we help?" rows="4"></textarea>
-                <button id="contactSubmitBtn" class="primary-btn">Send Message</button>
-                <p id="contactMessageStatus" class="error-msg"></p>
-            </div>
-        </div>
-    </div>
-
-    <div id="login2FAModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-login2fa" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Two-Factor Auth</h2>
-                <p class="subtitle">Enter the code from your authenticator app.</p>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="login2FACode" placeholder="000 000" class="code-input" maxlength="7" inputmode="numeric" autocomplete="one-time-code">
-                <button id="login2FASubmitBtn" class="primary-btn">Verify Login</button>
-                <p id="login2FAMessage" class="error-msg"></p>
-            </div>
-        </div>
-    </div>
-
-    <div id="setup2FAModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-setup2fa" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Setup 2FA</h2>
-            </div>
-            <div class="modal-body">
-                <p class="setup-instruction">1. Scan with <strong>any Authenticator App</strong> (Google, Microsoft, Authy).</p>
-                <div class="qr-container">
-                    <img id="qrCodeImage" src="" alt="QR Code">
-                </div>
-                <p class="setup-instruction">2. Enter the code generated.</p>
-                <input type="text" id="setup2FACode" placeholder="123456" class="code-input" maxlength="7" inputmode="numeric" autocomplete="one-time-code">
-                <button id="confirm2FABtn" class="primary-btn">Enable 2FA</button>
-                <p id="setup2FAMessage" class="error-msg"></p>
-            </div>
-        </div>
-    </div>
-
-    <div id="legalModal" class="modal hidden">
-        <div class="modal-content legal-content">
-            <span class="close-modal close-legal" data-tooltip="Close">&times;</span>
-            <div class="legal-container">
-                <aside class="legal-sidebar">
-                    <div class="legal-header">
-                        <h2><i class="fas fa-scale-balanced"></i> Legal Hub</h2>
+                <div class="modal-body" style="padding-bottom: 1.5rem;">
+                    <div class="input-icon-group" style="margin-bottom: 1rem; position: relative;">
+                        <i class="fas fa-envelope input-leading-icon"></i>
+                        <input type="email" id="forgotEmail" class="icon-input" placeholder="Email Address">
                     </div>
-                    <nav class="legal-nav">
-                        <button class="legal-tab active" data-target="tab-privacy">Privacy Policy</button>
-                        <button class="legal-tab" data-target="tab-cookies">Cookie Policy</button>
-                        <button class="legal-tab" data-target="tab-terms">Terms of Service</button>
-                    </nav>
-                </aside>
-                <main class="legal-main">
-                    <div id="tab-privacy" class="legal-pane active">
-                        <h3>Privacy Policy</h3>
-                        <p class="text-muted legal-date">Last updated: January 2026</p>
-                        <div class="legal-block">
-                            <h4>1. Data Collection</h4>
-                            <p>We do not store the passwords you test. They are processed in memory and discarded immediately. For user accounts, we store only salted, hashed passwords (Bcrypt).</p>
-                        </div>
-                        <div class="legal-block">
-                            <h4>2. User Rights</h4>
-                            <p>You have the right to delete your account and all associated data at any time via the dashboard.</p>
-                        </div>
-                    </div>
-                    <div id="tab-cookies" class="legal-pane hidden">
-                        <h3>Cookie Policy</h3>
-                        <div class="legal-block">
-                            <h4>Essential Cookies</h4>
-                            <p>We use a single secure, HTTP-only cookie (<code>token</code>) to keep you logged in. This is essential for the application to function.</p>
-                        </div>
-                        <div class="legal-block">
-                            <h4>No Tracking</h4>
-                            <p>We do not use Google Analytics, Facebook Pixels, or any third-party tracking cookies.</p>
-                        </div>
-                    </div>
-                    <div id="tab-terms" class="legal-pane hidden">
-                        <h3>Terms of Service</h3>
-                        <div class="legal-block">
-                            <h4>Usage License</h4>
-                            <p>Vaultary is an open-source educational tool. You may use it for personal security auditing. Illegal use is strictly prohibited.</p>
-                        </div>
-                        <div class="legal-block">
-                            <h4>Disclaimer</h4>
-                            <p>The software is provided "as is", without warranty of any kind. We are not liable for any damages arising from the use of this software.</p>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </div>
-    </div>
-
-    <div id="sessionTimeoutModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="timeout-header"><i class="fas fa-hourglass-half"></i> Session Timeout</h2>
-            </div>
-            <div class="modal-body">
-                <p>You will be logged out in <span id="timeoutCountdown" class="timeout-countdown">60</span> seconds due to inactivity.</p>
-                <button id="stayLoggedInBtn" class="primary-btn timeout-btn">Stay Logged In</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="dashboardModal" class="modal hidden">
-        <div class="dashboard-container">
-            <aside class="dash-sidebar">
-                <div class="dash-profile-summary">
-                    <div class="dash-avatar">
-                        <img id="dashProfilePic" src="" alt="User">
-                    </div>
-                    <h3 id="dashUsername">User</h3>
-                    <span class="dash-role" id="dashRole">Member</span>
-                </div>
-                
-                <nav class="dash-nav">
-                    <button class="dash-tab active" data-target="profile-section"><i class="fas fa-user-cog"></i> Profile</button>
-                    <button class="dash-tab" data-target="vault-section"><i class="fas fa-key"></i> Vault</button>
-                    <button class="dash-tab" data-target="notes-section"><i class="fas fa-sticky-note"></i> Notes</button>
-                    <button class="dash-tab hidden" id="dashAdminTab" data-target="admin-section"><i class="fas fa-shield-alt"></i> Admin</button>
-                </nav>
-
-                <div class="dash-footer">
-                    <button id="dashLogoutBtn" class="dash-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                </div>
-            </aside>
-
-            <main class="dash-content">
-                <button class="close-dashboard" type="button" aria-label="Close Dashboard"><i class="fas fa-times"></i></button>
-                
-                <div id="profile-section" class="dash-view active">
-                    <h2>Account Settings</h2>
+                    <p id="forgotMessage" class="error-msg" style="margin-bottom: 0.5rem;"></p>
+                    <button id="forgotSubmitBtn" class="primary-btn premium-login-btn full-width" style="margin-bottom: 1rem; position: relative; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span id="forgotBtnText">Send Reset Link</span>
+                        <i class="fas fa-spinner fa-spin hidden" id="forgotBtnSpinner"></i>
+                    </button>
                     
-                    <div class="security-card">
-                        <div class="sec-info">
-                            <h3><i class="fas fa-lock"></i> Security</h3>
-                            <p>Two-Factor Authentication (2FA)</p>
-                        </div>
-                        <button id="toggle2FABtn" class="primary-btn sm-btn">Enable 2FA</button>
+                    <div class="security-indicator" style="margin-top: 0; margin-bottom: 1.5rem;">
+                        <i class="fas fa-lock" style="color: var(--success);"></i> <span style="color: var(--text-main);">Reset links expire automatically for security.</span>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="input-group-dash">
-                            <label for="editUsername">Username <span id="usernameCharCount" class="char-count">0/50</span></label>
-                            <input type="text" id="editUsername" placeholder="Username" title="Username" maxlength="50">
-                            <p id="editUsernameError" class="error-msg field-error hidden"></p>
-                        </div>
-                        <div class="input-group-dash">
-                            <label for="editEmail">Email Address</label>
-                            <input type="text" id="editEmail" placeholder="name@example.com" title="Email Address">
-                        </div>
-                        <div class="input-group-dash">
-                            <label for="editPhone">Phone Number</label>
-                            <input type="text" id="editPhone" placeholder="+1 234 567 890" title="Phone Number">
-                            <p id="editPhoneError" class="error-msg field-error hidden"></p>
-                        </div>
-                        <div class="input-group-dash">
-                            <label for="editDob">Date of Birth</label>
-                            <input type="text" id="editDob" placeholder="DD/MM/YYYY" title="Date of Birth" maxlength="10">
-                            <p id="editDobError" class="error-msg field-error hidden"></p>
-                        </div>
-                    </div>
-                    <div class="dash-actions">
-                        <button id="saveProfileBtn" class="primary-btn" type="button">Save Changes</button>
-                        <button id="mobileActionLogoutBtn" class="danger-btn-text mobile-action-btn" type="button">Logout</button>
-                        <button id="deleteAccountBtn" class="danger-btn-text" type="button">Delete Account</button>
+                    <div style="text-align: center;">
+                        <a href="#" id="backToSignInLink" style="color: var(--text-main); text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: color 0.2s;">Back to Sign In</a>
                     </div>
                 </div>
+            </div>
 
-                <div id="vault-section" class="dash-view hidden">
-                    <div class="section-header">
-                        <h2>Password Vault</h2>
-                        <div class="vault-header-actions">
-                            <button id="exportVaultBtn" class="nav-btn outline sm-btn"><i class="fas fa-file-csv"></i> Export CSV</button>
-                            <button id="openAddVaultModal" class="primary-btn sm-btn"><i class="fas fa-plus"></i> Add New</button>
-                        </div>
+            <!-- Success View (Hidden by default) -->
+            <div id="forgotSuccessView" class="hidden">
+                <div class="modal-header" style="padding-bottom: 0.5rem; padding-top: 3.5rem;">
+                    <div style="width: 64px; height: 64px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <i class="fas fa-check" style="font-size: 1.8rem; color: var(--success);"></i>
                     </div>
-
-                    <div class="vault-grid" id="vaultGrid">
-                        <p class="text-muted">Loading vault...</p>
-                    </div>
+                    <h2 style="font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px;">Check Your Email</h2>
                 </div>
-
-                <div id="notes-section" class="dash-view hidden">
-                    <div class="section-header">
-                        <h2>Secure Notes</h2>
-                        <div class="vault-header-actions">
-                            <button id="openAddNoteModal" class="primary-btn sm-btn"><i class="fas fa-plus"></i> Add Note</button>
-                        </div>
-                    </div>
-
-                    <div class="vault-grid" id="notesGrid">
-                        <p class="text-muted">Loading notes...</p>
-                    </div>
+                <div class="modal-body" style="padding-bottom: 2.5rem; text-align: center;">
+                    <p style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">If an account exists for this email address,<br>a password reset link has been sent.</p>
+                    
+                    <button id="successBackToSignInBtn" class="social-btn premium-social" style="justify-content: center; margin-bottom: 0;">Back to Sign In</button>
                 </div>
-
-                <div id="admin-section" class="dash-view hidden">
-                    <h2>User Management</h2>
-                    <div class="table-container">
-                        <table id="userTable">
-                        <thead>
-                            <tr><th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="userTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </main>
+            </div>
+            
         </div>
     </div>
-
-    <!-- VAULT MODALS -->
+    <div id="resetModal" class="modal hidden">
+        <div class="modal-content"><span class="close-modal close-reset">&times;</span><div class="modal-body"><input type="password" id="newResetPassword"><i id="toggleResetPassword"></i><ul id="reset-checklist" class="hidden"></ul><button id="resetSubmitBtn">Update</button><p id="resetMessage"></p></div></div>
+    </div>
+    <div id="contactModal" class="modal hidden">
+        <div class="modal-content"><span class="close-modal close-contact">&times;</span><div class="modal-body"><input type="text" id="contactName"><input type="email" id="contactEmail"><textarea id="contactMessage"></textarea><button id="contactSubmitBtn">Send</button><p id="contactMessageStatus"></p></div></div>
+    </div>
+    <div id="login2FAModal" class="modal hidden">
+        <div class="modal-content"><span class="close-modal close-2fa-login">&times;</span><div class="modal-body"><input type="text" id="login2FACode"><button id="login2FASubmitBtn">Verify</button><p id="login2FAMessage"></p></div></div>
+    </div>
+    <div id="setup2FAModal" class="modal hidden">
+        <div class="modal-content"><span class="close-modal close-setup-2fa">&times;</span><div class="modal-body"><img id="qrCodeImage"><input type="text" id="setup2FACode"><button id="confirm2FABtn">Verify</button><p id="setup2FAMessage"></p></div></div>
+    </div>
     <div id="addVaultModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-add-vault" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Save Password</h2>
+        <div class="modal-content"><span class="close-modal close-add-vault">&times;</span>
+        <div class="modal-header"><h2>Add to Vault</h2></div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+            <input type="text" id="vaultSiteName" placeholder="Site / Service Name (e.g. Chase Bank, GitHub)">
+            <input type="text" id="vaultSiteURL" placeholder="URL (e.g. https://chase.com)">
+            <input type="text" id="vaultUsername" placeholder="Username / Email">
+            <div style="position: relative;">
+                <input type="password" id="vaultPassword" placeholder="Password" style="padding-right: 40px;">
+                <i class="fas fa-eye input-icons" id="toggleAddVaultPassword" style="position:absolute; right:15px; top:50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
             </div>
-            <div class="modal-body">
-                <input type="text" id="vaultSiteName" placeholder="Site Name (e.g. Netflix)" autocomplete="off">
-                <input type="text" id="vaultSiteURL" placeholder="URL (Optional)" autocomplete="off">
-                <input type="text" id="vaultUsername" placeholder="Username/Email" autocomplete="off">
-                <input type="password" id="vaultPassword" placeholder="Password" autocomplete="off">
-                <button id="saveVaultBtn" class="primary-btn">Save to Vault</button>
-                <p id="vaultMessage" class="error-msg"></p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Asset Criticality</label>
+                    <select id="vaultCriticality" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main);">
+                        <option value="critical">Critical (3.5x Weight)</option>
+                        <option value="high">High (2.0x Weight)</option>
+                        <option value="medium" selected>Medium (1.0x Weight)</option>
+                        <option value="low">Low (0.5x Weight)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Category</label>
+                    <select id="vaultCategory" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main);">
+                        <option value="Logins">Logins</option>
+                        <option value="Financial">Financial / Banking</option>
+                        <option value="Work">Work / Corporate</option>
+                        <option value="Cloud">Cloud & Infrastructure</option>
+                        <option value="Social">Social Media</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
             </div>
-        </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px; padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 8px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+                    <input type="checkbox" id="vaultZeroKnowledgeToggle" checked> 
+                    <span><i class="fas fa-lock" style="color: #8b5cf6;"></i> Client-Side Zero-Knowledge Encryption (AES-GCM-256)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+                    <input type="checkbox" id="vaultCanaryToggle"> 
+                    <span><i class="fas fa-fire" style="color: #f97316;"></i> Deploy as Honeypot / Canary Lure (Tripwire Armed)</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 8px;">
+                <button id="saveVaultBtn" class="primary-btn" style="min-width: 140px;">Save to Vault</button>
+            </div>
+            <p id="vaultMessage" class="error-msg" style="text-align: center; margin: 0;"></p>
+        </div></div>
     </div>
 
     <div id="editVaultModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-edit-vault" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Edit Password</h2>
+        <div class="modal-content"><span class="close-modal close-edit-vault">&times;</span>
+        <div class="modal-header"><h2>Edit Vault Item</h2></div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+            <input type="hidden" id="editVaultId">
+            <input type="text" id="editVaultSiteName" placeholder="Site Name">
+            <input type="text" id="editVaultSiteURL" placeholder="URL (Optional)">
+            <input type="text" id="editVaultUsername" placeholder="Username">
+            <div style="position: relative;">
+                <input type="password" id="editVaultPassword" placeholder="Password (leave blank to keep current)" style="padding-right: 40px;">
+                <i class="fas fa-eye input-icons" id="toggleEditVaultPassword" style="position:absolute; right:15px; top:50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="editVaultId">
-                <input type="text" id="editVaultSiteName" placeholder="Site Name (e.g. Netflix)" autocomplete="off">
-                <input type="text" id="editVaultSiteURL" placeholder="URL (Optional)" autocomplete="off">
-                <input type="text" id="editVaultUsername" placeholder="Username/Email" autocomplete="off">
-                <div class="input-group-auth">
-                    <input type="password" id="editVaultPassword" placeholder="Password" autocomplete="off">
-                    <i class="fas fa-eye password-toggle-icon" id="toggleEditVaultPassword" role="button" tabindex="0" aria-label="Toggle password visibility" title="Toggle password visibility"></i>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Asset Criticality</label>
+                    <select id="editVaultCriticality" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main);">
+                        <option value="critical">Critical (3.5x Weight)</option>
+                        <option value="high">High (2.0x Weight)</option>
+                        <option value="medium">Medium (1.0x Weight)</option>
+                        <option value="low">Low (0.5x Weight)</option>
+                    </select>
                 </div>
-                <button id="updateVaultBtn" class="primary-btn">Update</button>
-                <p id="editVaultMessage" class="error-msg"></p>
+                <div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Category</label>
+                    <select id="editVaultCategory" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main);">
+                        <option value="Logins">Logins</option>
+                        <option value="Financial">Financial / Banking</option>
+                        <option value="Work">Work / Corporate</option>
+                        <option value="Cloud">Cloud & Infrastructure</option>
+                        <option value="Social">Social Media</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 8px;">
+                <button id="updateVaultBtn" class="primary-btn" style="min-width: 140px;">Update Entry</button>
+            </div>
+            <p id="editVaultMessage" class="error-msg" style="text-align: center; margin: 0;"></p>
+        </div></div>
+    </div>
+
+    <!-- DEPLOY CANARY HONEYPOT MODAL -->
+    <div id="deployCanaryModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 520px;"><span class="close-modal close-deploy-canary">&times;</span>
+            <div class="modal-header">
+                <h2><i class="fas fa-fire" style="color: #f97316; margin-right: 8px;"></i> Deploy Canary Honeypot</h2>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                    Canaries are deceptive, high-value lures (like root cloud keys or corporate VPNs). If an intruder, compromised extension, or rogue admin attempts to view or decrypt this credential, a silent tripwire instantly logs their IP address and dispatches an emergency intrusion alert to your email.
+                </p>
+                
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; display: block;">Select Canary Lure Template</label>
+                    <select id="canaryLureType" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main); font-weight: 600;">
+                        <option value="aws">AWS Root Production Console (High-Value Cloud Lure)</option>
+                        <option value="vpn">Corporate Fortinet VPN Gateway (SecOps Gateway)</option>
+                        <option value="stripe">Stripe Production Secret Key (Financial Gateway)</option>
+                        <option value="crypto">Binance Institutional Custody (Cold Wallet Seed)</option>
+                    </select>
+                </div>
+
+                <div style="background: rgba(249, 115, 22, 0.08); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #fb923c; line-height: 1.4;">
+                    <i class="fas fa-satellite-dish" style="margin-right: 6px;"></i> <strong>Active Tripwire:</strong> A realistic decoy credential will be generated automatically. Any access will silently trip the security alarm without alerting the intruder.
+                </div>
+
+                <div style="display: flex; justify-content: center; margin-top: 4px;">
+                    <button id="confirmDeployCanaryBtn" class="primary-btn" style="min-width: 160px; background: #ea580c;"><i class="fas fa-shield-alt"></i> Arm & Deploy Canary</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- NOTES MODALS -->
+    <!-- CRYPTOGRAPHIC PROOF & ZERO-KNOWLEDGE MODAL -->
+    <div id="cryptoProofModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;"><span class="close-modal close-crypto-proof">&times;</span>
+            <div class="modal-header">
+                <h2><i class="fas fa-key" style="color: #8b5cf6; margin-right: 8px;"></i> Cryptographic Proof: Zero-Knowledge</h2>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                    Vaultary implements true <strong>End-to-End Zero-Knowledge Architecture</strong>. Your passwords are encrypted directly within your browser using the W3C Web Cryptography API before any network transmission occurs.
+                </p>
+
+                <div style="background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 14px; font-family: monospace; font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px;">
+                    <div><span style="color: var(--text-muted);">DERIVATION:</span> <span style="color: #8b5cf6; font-weight: bold;">PBKDF2-HMAC-SHA256 (100,000 Rounds)</span></div>
+                    <div><span style="color: var(--text-muted);">ALGORITHM:</span> <span style="color: #10b981; font-weight: bold;">AES-GCM (256-bit Authenticated)</span></div>
+                    <div><span style="color: var(--text-muted);">INITIALIZATION VECTOR (IV):</span> <span id="proofIVText" style="color: var(--text-main); word-break: break-all;">--</span></div>
+                    <div><span style="color: var(--text-muted);">CIPHERTEXT PAYLOAD:</span> <span id="proofCiphertextText" style="color: var(--text-main); word-break: break-all;">--</span></div>
+                </div>
+
+                <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    <strong style="color: var(--text-main);">Mathematical Zero-Knowledge Guarantee:</strong> The server database only receives the AES-GCM ciphertext and authentication tag. Even in the event of complete server or database compromise, an attacker cannot reverse the ciphertext without your client-derived master key.
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="addNoteModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-add-note" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Add Secure Note</h2>
+        <div class="modal-content"><span class="close-modal close-add-note">&times;</span><div class="modal-header"><h2>Create Secure Note</h2></div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+            <input type="text" id="noteTitle" placeholder="Note Title">
+            <textarea id="noteContent" placeholder="Secure Note Content..." style="min-height: 150px; resize: vertical;"></textarea>
+            <div style="display: flex; justify-content: center; margin-top: 8px;">
+                <button id="saveNoteBtn" class="primary-btn" style="min-width: 140px;">Save Note</button>
             </div>
-            <div class="modal-body">
-                <input type="text" id="noteTitle" placeholder="Note Title (e.g. Secret PINs)" autocomplete="off">
-                <textarea id="noteContent" class="note-textarea" placeholder="Write your secure note here..." rows="6"></textarea>
-                <button id="saveNoteBtn" class="primary-btn">Save Note</button>
-                <p id="noteMessage" class="error-msg"></p>
-            </div>
-        </div>
+            <p id="noteMessage" class="error-msg" style="text-align: center; margin: 0;"></p>
+        </div></div>
     </div>
-
     <div id="editNoteModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal close-edit-note" data-tooltip="Close">&times;</span>
-            <div class="modal-header">
-                <h2>Edit Secure Note</h2>
+        <div class="modal-content"><span class="close-modal close-edit-note">&times;</span><div class="modal-header"><h2>View / Edit Note</h2></div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+            <input type="hidden" id="editNoteId">
+            <input type="text" id="editNoteTitle" placeholder="Note Title">
+            <textarea id="editNoteContent" placeholder="Secure Note Content..." style="min-height: 150px; resize: vertical;"></textarea>
+            <div style="display: flex; justify-content: center; margin-top: 8px;">
+                <button id="updateNoteBtn" class="primary-btn" style="min-width: 140px;">Update Note</button>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="editNoteId">
-                <input type="text" id="editNoteTitle" placeholder="Note Title" autocomplete="off">
-                <textarea id="editNoteContent" class="note-textarea" placeholder="Write your secure note here..." rows="6"></textarea>
-                <button id="updateNoteBtn" class="primary-btn">Update Note</button>
-                <p id="editNoteMessage" class="error-msg"></p>
+            <p id="editNoteMessage" class="error-msg" style="text-align: center; margin: 0;"></p>
+        </div></div>
+    </div>
+    <div id="legalModal" class="modal hidden"><div class="modal-content"><span class="close-modal close-legal">&times;</span><div id="tab-privacy"></div><div id="tab-terms"></div><div id="tab-cookies"></div></div></div>
+    <div id="deleteConfirmModal" class="modal hidden">
+        <div class="modal-content premium-modal">
+            <span class="close-modal circular-close close-delete-confirm" title="Close"><i class="fas fa-times"></i></span>
+            <div class="modal-header" style="padding-bottom: 1rem;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(239, 68, 68, 0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 1.5rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 style="font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px;">Delete Item?</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-body" style="padding-bottom: 2.5rem; display: flex; gap: 12px; align-items: center; justify-content: center;">
+                <button id="cancelDeleteBtn" class="outline-btn" style="flex: 1; padding: 12px;">Cancel</button>
+                <button id="confirmDeleteBtn" class="danger-btn" style="flex: 1; padding: 12px;">Delete</button>
             </div>
         </div>
     </div>
-
-    <button id="backToTopBtn" class="back-to-top" data-tooltip="Back to Top" aria-label="Back to Top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
+    
+    <div id="sessionTimeoutModal" class="modal hidden"><div class="modal-content"><span id="timeoutCountdown"></span><button id="stayLoggedInBtn"></button></div></div>
+    
+    <button id="backToTopBtn" class="hidden"></button>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
