@@ -1,3 +1,6 @@
+import sys
+print(f"[VAULTARY] Starting cold-start on Python {sys.version}...", flush=True)
+
 import os
 import hashlib
 import requests
@@ -294,6 +297,16 @@ def admin_required(f):
         if not current_user.is_admin: return jsonify({'message': 'Admin access required!'}), 403
         return f(current_user, *args, **kwargs)
     return decorated
+
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'serverless': IS_SERVERLESS,
+        'has_db_url': bool(os.getenv('DATABASE_URL')),
+        'has_secret_key': bool(os.getenv('SECRET_KEY')),
+        'db_uri_scheme': app.config.get('SQLALCHEMY_DATABASE_URI', '').split(':')[0]
+    })
 
 @app.route('/')
 def home(): return render_template('index.html')
@@ -1695,6 +1708,8 @@ else:
                 db.create_all()
             except Exception as e:
                 print(f"Serverless DB init note: {e}", flush=True)
+
+print(f"[VAULTARY] Module import completed! Mode={'Serverless' if IS_SERVERLESS else 'Local'}, DB={app.config.get('SQLALCHEMY_DATABASE_URI')}", flush=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
