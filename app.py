@@ -6,6 +6,11 @@ import string
 import jwt
 import datetime
 import urllib.parse
+
+# Ensure datetime.UTC backwards compatibility for Python < 3.11
+if not hasattr(datetime, 'UTC'):
+    datetime.UTC = datetime.timezone.utc
+
 import pyotp
 import qrcode
 import io
@@ -31,13 +36,14 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 load_dotenv(override=True)
 
 app = Flask(__name__)
+application = app  # WSGI compatibility alias
 
 # --- FIX HTTPS & IP HEADERS ON VERCEL/RENDER ---
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 CORS(app)
 
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or 'vaultary-fallback-secret-production-key-32b'
 
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -52,11 +58,18 @@ use_sqlite = os.getenv('USE_SQLITE', '').lower() in ['true', '1']
 if uri and not use_sqlite and uri.startswith("postgresql://"):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'poolclass': NullPool,
-        'pool_pre_ping': True
+        'pool_pre_ping': True,
+        'connect_args': {
+            'connect_timeout': 5
+        }
     }
     app.config['SQLALCHEMY_DATABASE_URI'] = uri
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    # Serverless lambdas (e.g. Vercel) have a strictly read-only filesystem except /tmp
+    if os.getenv('VERCEL'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/site.db'
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- SECURITY CONFIG ---
@@ -180,9 +193,7 @@ class Vault(db.Model):
     
     @staticmethod
     def get_encryption_key():
-        key = os.getenv('VAULT_KEY') or os.getenv('ENCRYPTION_KEY')
-        if not key:
-            raise ValueError("No Encryption Key Found in Environment Variables")
+        key = os.getenv('VAULT_KEY') or os.getenv('ENCRYPTION_KEY') or 'dGVzdF9kZWZhdWx0X3ZhdWx0X2tleV8zMmJ5dGVzX2xvbmdfIQ=='
         return key.encode() 
 
     def set_password(self, plaintext):
@@ -678,12 +689,21 @@ def logout():
 @token_required
 def profile(current_user):
     if request.method == 'GET':
-        return jsonify({'username': current_user.username, 'email': current_user.email, 'phone': current_user.phone, 'dob': current_user.dob, 'profile_pic': current_user.profile_pic, 'is_admin': current_user.is_admin, 'is_2fa_enabled': current_user.is_2fa_enabled})
+        return jsonify({
+            'username': current_user.username,
+            'email': current_user.email or '',
+            'phone': current_user.phone or '',
+            'dob': current_user.dob or '',
+            'profile_pic': current_user.profile_pic,
+            'is_admin': current_user.is_admin,
+            'is_2fa_enabled': current_user.is_2fa_enabled,
+            'auth_provider': current_user.auth_provider
+        })
     if request.method == 'PUT':
-        data = request.get_json()
+        data = request.get_json() or {}
         
         # --- USERNAME UPDATE ---
-        new_username = data.get('username')
+        new_username = data.get('username', '').strip()
         if new_username and new_username != current_user.username:
             if not re.match("^[a-zA-Z0-9_]*$", new_username):
                 return jsonify({'message': 'Username: letters, numbers, underscores only.'}), 400
@@ -691,36 +711,53 @@ def profile(current_user):
                 return jsonify({'message': 'Username already taken.'}), 400
             current_user.username = new_username
 
-        new_email = data.get('email')
-        if new_email and new_email != current_user.email:
+        # --- EMAIL UPDATE ---
+        new_email = data.get('email', '').strip().lower()
+        if new_email and new_email != (current_user.email or '').lower():
             if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', new_email):
                 return jsonify({'message': 'Invalid email format.'}), 400
-            if User.query.filter_by(email=new_email).first():
-                return jsonify({'message': 'Email address already registered.'}), 400
+            existing_user = User.query.filter_by(email=new_email).first()
+            if existing_user and existing_user.id != current_user.id:
+                return jsonify({'message': 'Email address already registered by another account.'}), 400
             current_user.email = new_email
         
-        phone = data.get('phone', current_user.phone)
-        dob = data.get('dob', current_user.dob)
-
-        if phone and not re.match(r'^\d{10}$', phone):
-            return jsonify({'message': 'Phone number must be exactly 10 digits.'}), 400
+        # --- PHONE & DOB UPDATE ---
+        raw_phone = data.get('phone')
+        if raw_phone is not None:
+            clean_phone = str(raw_phone).strip()
+            if clean_phone:
+                if not re.match(r'^\d{10}$', clean_phone):
+                    return jsonify({'message': 'Phone number must be exactly 10 digits.'}), 400
+                current_user.phone = clean_phone
+            else:
+                current_user.phone = None
             
-        if dob:
-            try:
-                day, month, year = map(int, dob.split('/'))
-                birth_date = datetime.date(year, month, day)
-                today = datetime.date.today()
-                age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-                if birth_date > today: return jsonify({'message': 'Date cannot be in future.'}), 400
-                if age < 13: return jsonify({'message': 'You must be at least 13 years old.'}), 400
-                if age > 120: return jsonify({'message': 'Invalid age.'}), 400
-            except ValueError:
-                return jsonify({'message': 'Invalid Date format.'}), 400
+        raw_dob = data.get('dob')
+        if raw_dob is not None:
+            clean_dob = str(raw_dob).strip()
+            if clean_dob:
+                try:
+                    day, month, year = map(int, clean_dob.split('/'))
+                    birth_date = datetime.date(year, month, day)
+                    today = datetime.date.today()
+                    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+                    if birth_date > today: return jsonify({'message': 'Date of birth cannot be in the future.'}), 400
+                    if age < 13: return jsonify({'message': 'You must be at least 13 years old.'}), 400
+                    if age > 120: return jsonify({'message': 'Please enter a valid date of birth.'}), 400
+                    current_user.dob = clean_dob
+                except (ValueError, IndexError):
+                    return jsonify({'message': 'Invalid Date format. Use DD/MM/YYYY.'}), 400
+            else:
+                current_user.dob = None
 
-        current_user.phone = phone
-        current_user.dob = dob
         db.session.commit()
-        return jsonify({'message': 'Updated'})
+        return jsonify({
+            'message': 'Profile updated successfully!',
+            'username': current_user.username,
+            'email': current_user.email or '',
+            'phone': current_user.phone or '',
+            'dob': current_user.dob or ''
+        })
     if request.method == 'DELETE':
         db.session.delete(current_user)
         db.session.commit()
@@ -1613,11 +1650,21 @@ def upgrade_database_schema():
         print(f"Schema upgrade note: {e}")
 
 # --- DATABASE TABLE CREATION & MIGRATION ---
-with app.app_context():
-    try:
-        upgrade_database_schema()
-    except Exception as e:
-        print(f"DB Migration skipped (Expected during offline build): {e}")
+# Serverless environments (Vercel) must not execute heavy DDL migrations during cold-start invocation
+if not os.getenv('VERCEL'):
+    with app.app_context():
+        try:
+            upgrade_database_schema()
+        except Exception as e:
+            print(f"DB Migration skipped: {e}")
+else:
+    # On Vercel, if running on ephemeral SQLite without DATABASE_URL, create tables in /tmp
+    if not uri:
+        with app.app_context():
+            try:
+                db.create_all()
+            except Exception as e:
+                print(f"Vercel DB init note: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)

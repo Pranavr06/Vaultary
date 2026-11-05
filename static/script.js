@@ -1287,32 +1287,59 @@ function openDashboard(defaultTab) {
 }
 
 async function loadProfile() {
-    const res = await fetch('/profile');
-    if(res.ok) {
-        const data = await res.json();
-        const profileInitials = document.getElementById('dashProfileInitials');
-        if (profileInitials) {
-            profileInitials.innerText = data.username.substring(0, 2).toUpperCase();
+    try {
+        const res = await fetch('/profile');
+        if (res.ok) {
+            const data = await res.json();
+            const profileInitials = document.getElementById('dashProfileInitials');
+            if (profileInitials) {
+                profileInitials.innerText = (data.username || "U").substring(0, 2).toUpperCase();
+            }
+            const dashUserEl = document.getElementById('dashUsername');
+            if (dashUserEl) dashUserEl.innerText = data.username || "";
+            
+            const roleText = (data.is_admin || localStorage.getItem('is_admin') === 'true') ? 'Administrator' : 'Premium Member';
+            const dashRole = document.getElementById('dashRole');
+            if (dashRole) dashRole.innerText = roleText;
+
+            if (editUsername) {
+                editUsername.value = data.username || "";
+                if (usernameCharCount) usernameCharCount.innerText = `${editUsername.value.length}/50`;
+            }
+            if (editUsernameError) editUsernameError.classList.add('hidden');
+
+            if (editEmail) editEmail.value = data.email || "";
+            const editEmailError = document.getElementById('editEmailError');
+            if (editEmailError) editEmailError.classList.add('hidden');
+
+            if (editPhone) {
+                editPhone.value = data.phone || "";
+                editPhone.dataset.valid = (data.phone && data.phone.length === 10) ? "true" : "";
+            }
+            const editPhoneError = document.getElementById('editPhoneError');
+            if (editPhoneError) editPhoneError.classList.add('hidden');
+
+            if (editDob) {
+                editDob.value = data.dob || "";
+                editDob.dataset.valid = data.dob ? "true" : "";
+            }
+            const editDobError = document.getElementById('editDobError');
+            if (editDobError) editDobError.classList.add('hidden');
+            
+            if (toggle2FABtn) {
+                if (data.is_2fa_enabled) {
+                    toggle2FABtn.innerText = "Disable 2FA";
+                    toggle2FABtn.classList.replace('primary-btn', 'danger-btn');
+                    toggle2FABtn.onclick = disable2FA;
+                } else {
+                    toggle2FABtn.innerText = "Enable 2FA";
+                    toggle2FABtn.classList.replace('danger-btn', 'primary-btn');
+                    toggle2FABtn.onclick = startSetup2FA;
+                }
+            }
         }
-        document.getElementById('dashUsername').innerText = data.username;
-        const roleText = localStorage.getItem('is_admin') === 'true' ? 'Administrator' : 'Premium Member';
-        document.getElementById('dashRole').innerText = roleText;
-        editUsername.value = data.username;
-        if (usernameCharCount) usernameCharCount.innerText = `${data.username.length}/50`;
-        editUsernameError.classList.add('hidden');
-        editEmail.value = data.email || "";
-        editPhone.value = data.phone || "";
-        editDob.value = data.dob || "";
-        
-        if (data.is_2fa_enabled) {
-            toggle2FABtn.innerText = "Disable 2FA";
-            toggle2FABtn.classList.replace('primary-btn', 'danger-btn');
-            toggle2FABtn.onclick = disable2FA;
-        } else {
-            toggle2FABtn.innerText = "Enable 2FA";
-            toggle2FABtn.classList.replace('danger-btn', 'primary-btn');
-            toggle2FABtn.onclick = startSetup2FA;
-        }
+    } catch (err) {
+        console.error("Failed to load profile details:", err);
     }
 }
 
@@ -1320,7 +1347,7 @@ editUsername.addEventListener('input', () => {
     const val = editUsername.value;
     if (usernameCharCount) usernameCharCount.innerText = `${val.length}/50`;
     
-    // SQL Injection & Format Check (Frontend)
+    // Format Check
     if (!/^[a-zA-Z0-9_]*$/.test(val)) {
         editUsernameError.innerText = "Only letters, numbers, and underscores allowed.";
         editUsernameError.classList.remove('hidden');
@@ -1333,47 +1360,106 @@ saveProfileBtn.addEventListener('click', async () => {
     const phoneInput = document.getElementById('editPhone');
     const dobInput = document.getElementById('editDob');
     const usernameInput = document.getElementById('editUsername');
+    const emailInput = document.getElementById('editEmail');
+
+    const phoneError = document.getElementById('editPhoneError');
+    const dobError = document.getElementById('editDobError');
+    const usernameError = document.getElementById('editUsernameError');
+    const emailError = document.getElementById('editEmailError');
+
+    // Reset inline error messages
+    if (phoneError) phoneError.classList.add('hidden');
+    if (dobError) dobError.classList.add('hidden');
+    if (usernameError) usernameError.classList.add('hidden');
+    if (emailError) emailError.classList.add('hidden');
+
+    // Validate DOB if entered
+    if (dobInput && dobInput.value.trim().length > 0) {
+        validateDobLogic(dobInput, dobError);
+        if (dobInput.dataset.valid === "false") return;
+    }
+
+    // Validate Phone if entered
+    if (phoneInput && phoneInput.value.trim().length > 0) {
+        if (phoneInput.value.trim().length !== 10) {
+            if (phoneError) {
+                phoneError.innerText = "Phone number must be exactly 10 digits.";
+                phoneError.classList.remove('hidden');
+            }
+            return;
+        }
+    }
     
-    validateDobLogic(dobInput, document.getElementById('editDobError'));
-    if (dobInput.dataset.valid === "false") return;
-    if (phoneInput.value && phoneInput.value.length !== 10) return;
-    if (phoneInput.dataset.valid === "false") return;
-    
-    // Frontend Block for Invalid Username
-    if (!/^[a-zA-Z0-9_]*$/.test(usernameInput.value)) {
-        editUsernameError.innerText = "Invalid characters in username.";
-        editUsernameError.classList.remove('hidden');
+    // Validate Username
+    if (!usernameInput || !usernameInput.value.trim()) {
+        if (usernameError) {
+            usernameError.innerText = "Username cannot be empty.";
+            usernameError.classList.remove('hidden');
+        }
+        return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(usernameInput.value.trim())) {
+        if (usernameError) {
+            usernameError.innerText = "Invalid characters in username (letters, numbers, underscore only).";
+            usernameError.classList.remove('hidden');
+        }
         return;
     }
 
-    setLoading(saveProfileBtn, true);
-    editUsernameError.classList.add('hidden'); // Clear previous errors
-    
-    const res = await fetch('/profile', {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            username: editUsername.value,
-            email: editEmail.value,
-            phone: editPhone.value,
-            dob: editDob.value
-        })
-    });
-    const data = await res.json();
-    if(res.ok) { 
-        showToast("Profile Updated!", "success"); 
-        localStorage.setItem('username', editUsername.value);
-        document.getElementById('dashUsername').innerText = editUsername.value;
-        checkLoginState();
-    } else {
-        if (data.message.includes("Username")) {
-            editUsernameError.innerText = data.message.includes("taken") ? "Username exists, try another one." : data.message;
-            editUsernameError.classList.remove('hidden');
-        } else {
-            showToast(data.message, "error");
+    // Validate Email if entered
+    if (emailInput && emailInput.value.trim().length > 0) {
+        if (!/^[\w.-]+@[\w.-]+\.\w+$/.test(emailInput.value.trim())) {
+            if (emailError) {
+                emailError.innerText = "Invalid email format.";
+                emailError.classList.remove('hidden');
+            }
+            return;
         }
     }
-    setLoading(saveProfileBtn, false);
+
+    setLoading(saveProfileBtn, true);
+    try {
+        const res = await fetch('/profile', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                username: usernameInput.value.trim(),
+                email: emailInput ? emailInput.value.trim() : '',
+                phone: phoneInput ? phoneInput.value.trim() : '',
+                dob: dobInput ? dobInput.value.trim() : ''
+            })
+        });
+        const data = await res.json().catch(() => ({ message: "Server communication error" }));
+        if (res.ok) { 
+            showToast("Profile Updated Successfully!", "success"); 
+            localStorage.setItem('username', usernameInput.value.trim());
+            const dashUser = document.getElementById('dashUsername');
+            if (dashUser) dashUser.innerText = usernameInput.value.trim();
+            checkLoginState();
+            await loadProfile();
+        } else {
+            const msg = data.message || "Failed to update profile";
+            if (msg.toLowerCase().includes("username") && usernameError) {
+                usernameError.innerText = msg;
+                usernameError.classList.remove('hidden');
+            } else if (msg.toLowerCase().includes("email") && emailError) {
+                emailError.innerText = msg;
+                emailError.classList.remove('hidden');
+            } else if (msg.toLowerCase().includes("phone") && phoneError) {
+                phoneError.innerText = msg;
+                phoneError.classList.remove('hidden');
+            } else if (msg.toLowerCase().includes("date") && dobError) {
+                dobError.innerText = msg;
+                dobError.classList.remove('hidden');
+            } else {
+                showToast(msg, "error");
+            }
+        }
+    } catch (err) {
+        showToast("Error updating profile. Please try again.", "error");
+    } finally {
+        setLoading(saveProfileBtn, false);
+    }
 });
 
 deleteAccountBtn.addEventListener('click', async () => {
@@ -2851,7 +2937,8 @@ if (changePassNew) {
 
 // Password visibility toggles
 document.querySelectorAll('.toggle-password-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
         const targetId = btn.getAttribute('data-target');
         const input = document.getElementById(targetId);
         if (input) {

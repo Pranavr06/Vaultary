@@ -862,35 +862,86 @@ dark\] .command-pill:hover { border-color: rgba(255,255,255,0.1); }
 .insight-desc { font-size: 0.95rem; font-weight: 500; color: var(--text-main); flex: 1; }
 
 /* --- Profile Settings Refinements --- */
-.password-input-wrapper {
-    position: relative;
+.profile-input-group {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.profile-input-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+}
+
+.profile-box-input {
+    width: 100% !important;
+    padding: 12px 14px !important;
+    font-size: 0.95rem !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--input-border) !important;
+    background: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    box-sizing: border-box !important;
+    line-height: 1.4 !important;
+    transition: all 0.2s ease !important;
+}
+
+.profile-box-input.icon-input {
+    padding-left: 46px !important;
+}
+
+.profile-box-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--primary-light) !important;
+    outline: none !important;
+}
+
+.password-input-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
 }
 
 .password-input-wrapper input {
-    width: 100%;
-    padding-right: 40px;
+    width: 100% !important;
+    padding: 12px 46px 12px 14px !important;
+    font-size: 0.95rem !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--input-border) !important;
+    background: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    box-sizing: border-box !important;
 }
 
-.toggle-password-btn {
-    position: absolute;
-    right: 12px;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    transition: color 0.2s;
-    outline: none;
+.password-input-wrapper .toggle-password-btn {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    cursor: pointer !important;
+    font-size: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    z-index: 5 !important;
+    transition: color 0.2s ease !important;
+    outline: none !important;
 }
 
-.toggle-password-btn:hover {
-    color: var(--text-main);
+.password-input-wrapper .toggle-password-btn:hover {
+    color: var(--text-main) !important;
 }
 
 .danger-btn {

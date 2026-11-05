@@ -632,37 +632,42 @@
                     <!-- 1. Personal Information -->
                     <div class="premium-card" style="padding: 2rem; margin-bottom: 1.5rem;">
                         <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Personal Information</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
-                            <div style="margin-bottom: 0;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+                            <div class="profile-input-group">
+                                <label for="editUsername">Username</label>
                                 <div class="input-icon-group">
                                     <i class="fas fa-user input-leading-icon"></i>
-                                    <input type="text" id="editUsername" class="icon-input" placeholder="Username" style="width: 100%;">
+                                    <input type="text" id="editUsername" class="icon-input profile-box-input" placeholder="Enter username">
                                 </div>
                                 <p id="editUsernameError" class="error-msg hidden"></p>
                             </div>
-                            <div style="margin-bottom: 0;">
+                            <div class="profile-input-group">
+                                <label for="editEmail">Email Address</label>
                                 <div class="input-icon-group">
                                     <i class="fas fa-envelope input-leading-icon"></i>
-                                    <input type="email" id="editEmail" class="icon-input" placeholder="Email Address" style="width: 100%;">
+                                    <input type="email" id="editEmail" class="icon-input profile-box-input" placeholder="Enter email address">
                                 </div>
+                                <p id="editEmailError" class="error-msg hidden"></p>
                             </div>
-                            <div style="margin-bottom: 0;">
+                            <div class="profile-input-group">
+                                <label for="editPhone">Phone Number</label>
                                 <div class="input-icon-group">
                                     <i class="fas fa-phone-alt input-leading-icon"></i>
-                                    <input type="text" id="editPhone" class="icon-input" placeholder="Phone Number" style="width: 100%;">
+                                    <input type="text" id="editPhone" class="icon-input profile-box-input" placeholder="10-digit mobile number" maxlength="10">
                                 </div>
                                 <p id="editPhoneError" class="error-msg hidden"></p>
                             </div>
-                            <div style="margin-bottom: 0;">
+                            <div class="profile-input-group">
+                                <label for="editDob">Date of Birth</label>
                                 <div class="input-icon-group">
                                     <i class="fas fa-calendar-alt input-leading-icon"></i>
-                                    <input type="text" id="editDob" class="icon-input" placeholder="Date of Birth (DD/MM/YYYY)" style="width: 100%;">
+                                    <input type="text" id="editDob" class="icon-input profile-box-input" placeholder="DD/MM/YYYY" maxlength="10">
                                 </div>
                                 <p id="editDobError" class="error-msg hidden"></p>
                             </div>
                         </div>
                         <div style="margin-top: 1.5rem;">
-                            <button id="saveProfileBtn" class="primary-btn">Save Changes</button>
+                            <button id="saveProfileBtn" class="primary-btn"><i class="fas fa-save" style="margin-right: 6px;"></i> Save Changes</button>
                         </div>
                     </div>
 
@@ -670,24 +675,24 @@
                     <div class="premium-card" style="padding: 2rem; margin-bottom: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <h3 style="margin: 0; font-size: 1.25rem;">Security & Authentication</h3>
-                            <button id="toggle2FABtn" class="outline-btn" style="padding: 6px 12px; font-size: 0.9rem;"><i class="fas fa-shield-alt"></i> Two-Factor Auth</button>
+                            <button id="toggle2FABtn" class="outline-btn" style="padding: 6px 14px; font-size: 0.9rem;"><i class="fas fa-shield-alt"></i> Two-Factor Auth</button>
                         </div>
                         
                         <h4 style="margin-bottom: 1rem; color: var(--text-main); font-weight: 600;">Change Password</h4>
-                        <div style="display: grid; gap: 1rem;">
-                            <div class="input-group" style="margin-bottom: 0;">
-                                <label>Current Password</label>
+                        <div style="display: grid; gap: 1.25rem;">
+                            <div class="profile-input-group">
+                                <label for="changePassCurrent">Current Password</label>
                                 <div class="password-input-wrapper">
-                                    <input type="password" id="changePassCurrent" placeholder="Enter current password">
-                                    <button type="button" class="toggle-password-btn" data-target="changePassCurrent"><i class="fas fa-eye"></i></button>
+                                    <input type="password" id="changePassCurrent" class="profile-box-input" placeholder="Enter current password">
+                                    <button type="button" class="toggle-password-btn" data-target="changePassCurrent" aria-label="Toggle password visibility"><i class="fas fa-eye"></i></button>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 1.5rem;">
-                                <div class="input-group" style="margin-bottom: 0;">
-                                    <label>New Password</label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+                                <div class="profile-input-group">
+                                    <label for="changePassNew">New Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="changePassNew" placeholder="Enter new password">
-                                        <button type="button" class="toggle-password-btn" data-target="changePassNew"><i class="fas fa-eye"></i></button>
+                                        <input type="password" id="changePassNew" class="profile-box-input" placeholder="Enter new password">
+                                        <button type="button" class="toggle-password-btn" data-target="changePassNew" aria-label="Toggle password visibility"><i class="fas fa-eye"></i></button>
                                     </div>
                                     <!-- Password Strength Meter (Compact) -->
                                     <div class="password-strength-container" style="margin-top: 8px;">
@@ -710,11 +715,11 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <div class="input-group" style="margin-bottom: 0;">
-                                    <label>Confirm New Password</label>
+                                <div class="profile-input-group">
+                                    <label for="changePassConfirm">Confirm New Password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="changePassConfirm" placeholder="Confirm new password">
-                                        <button type="button" class="toggle-password-btn" data-target="changePassConfirm"><i class="fas fa-eye"></i></button>
+                                        <input type="password" id="changePassConfirm" class="profile-box-input" placeholder="Confirm new password">
+                                        <button type="button" class="toggle-password-btn" data-target="changePassConfirm" aria-label="Toggle password visibility"><i class="fas fa-eye"></i></button>
                                     </div>
                                 </div>
                             </div>
