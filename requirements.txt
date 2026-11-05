@@ -26,6 +26,8 @@ MarkupSafe
 ordered-set
 packaging
 Pillow
+psycopg
+psycopg-binary
 psycopg2-binary
 psycopg[binary]
 pycparser
